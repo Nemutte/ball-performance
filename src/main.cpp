@@ -7,7 +7,7 @@ bool SetupGLFW()
 		std::cout << "GLFW cant be loaded" << std::endl;
 		return false;
 	}
-	window = glfwCreateWindow(640, 480, "Cube", NULL, NULL);
+	window = glfwCreateWindow(screen_width, screen_height, "Cube", NULL, NULL);
 	if (!window)
 	{
 		std::cout << "window is NULLPTR" << std::endl;
@@ -83,6 +83,52 @@ unsigned int make_module(const std::string& filepath, unsigned int module_type)
 	}
 	return shaderModule;
 }
+void Draw()
+{
+	for (Ball* ball : balls)
+	{
+		ball->Draw();
+	}
+}
+void MoveToBorders()
+{
+	for (Ball* ball : balls)
+	{
+		if(ball->position.x < -screen_width)
+			ball->position.x = -screen_width;
+		if(ball->position.x > screen_width)
+			ball->position.x = screen_width;
+		if(ball->position.y < -screen_height)
+			ball->position.y = -screen_height;
+		if(ball->position.y > screen_height)
+			ball->position.y = screen_height;
+	}
+}
+void Update(float dt)
+{
+	for (Ball* ball : balls)
+	{
+		ball->Update(dt);
+	}
+	MoveToBorders();
+	Collision();
+}
+void Collision()
+{
+	for (Ball* a : balls)
+	{
+		for (Ball* b : balls)
+		{
+			if (a != b)
+			{
+				if (DetectCollision(a, b))
+				{
+					SolveCollision(a, b);
+				}
+			}
+		}
+	}
+}
 int main()
 {
 	if (!SetupGLFW())
@@ -100,18 +146,61 @@ int main()
 		"../src/shaders/fragment.txt"
 	);
 
+	// Creating balls
+	Model* model = new Model(shader);
+
 	// Set delta time
 	float last_time = (float)glfwGetTime();
 	float dt = 0.f;
 
+	// Set timers for FPS
+	double prevTime = 0.0;
+	double crntTime = 0.0;
+	double timeDiff;
+	unsigned int counter = 0;
+	//glfwSwapInterval(0);
+
+	// Setup for spawn ball
+	float time_for_spawn_ball = 0.f;
+	float count = 0.0;
+
 	// Program loop
 	while (!glfwWindowShouldClose(window))
 	{
+		glfwPollEvents();
 		// Calculate delta time
 		float dt = (float)glfwGetTime() - last_time;
 		last_time = (float)glfwGetTime();
 
+		// FPS
+		crntTime = glfwGetTime();
+		timeDiff = crntTime - prevTime;
+		counter++;
+		if (timeDiff >= 1.0 / 30.0)
+		{
+			std::string FPS = std::to_string((1.0 / timeDiff) * counter);
+			std::string newTitle = "balls: " + std::to_string(count) + " | " + FPS + " FPS";
+			glfwSetWindowTitle(window, newTitle.c_str());
+			prevTime = crntTime;
+			counter = 0;
+		}
+
+		// Ball spawner
+		time_for_spawn_ball += dt;
+		if (spawn_ball_ratio <= time_for_spawn_ball)
+		{
+			balls.push_back(new Ball(glm::vec2(-340.0 + count, 0.0), model));
+			balls.push_back(new Ball(glm::vec2(-340.0 + count + 10.f, 0.0), model));
+			balls.push_back(new Ball(glm::vec2(-340.0 + count + 20.f, 0.0), model));
+			balls.push_back(new Ball(glm::vec2(-340.0 + count + 30.f, 0.0), model));
+			count += 4.f;
+			time_for_spawn_ball = 0.f;
+		}
+
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		Update(dt);
+		Draw();
 
 		glfwSwapBuffers(window);
 	}

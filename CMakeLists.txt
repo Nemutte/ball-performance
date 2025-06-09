@@ -14,6 +14,9 @@ add_executable(ball-performance
 	src/main.h
 	src/ball.cpp
 	src/ball.h
+	src/model.cpp
+	src/model.h
+	src/glad.c
 )
 
 target_include_directories(ball-performance PRIVATE dependencies)
