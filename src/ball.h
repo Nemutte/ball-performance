@@ -9,6 +9,7 @@ public:
 	glm::vec2 position;
 	glm::vec2 last_position;
 	float radius;
+	float speed;
 
 	Ball(glm::vec2 pos, Model* model);
 	~Ball();

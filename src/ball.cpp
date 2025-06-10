@@ -1,7 +1,7 @@
 #include "ball.h"
 #include "model.h"
 
-Ball::Ball(glm::vec2 pos, Model* model) : position{ pos }, last_position{ pos }, model{ model }, radius{ 5.0 }
+Ball::Ball(glm::vec2 pos, Model* model) : position{ pos }, last_position{ pos }, model{ model }, radius{ 5.0 }, speed{ 50.0 }
 {
 
 }
@@ -12,7 +12,7 @@ void Ball::Update(float dt)
 {
 	glm::vec2 tmp_pos = last_position;
 	last_position = position;
-	position += position - tmp_pos + glm::vec2(0.0, -0.01);
+	position += (position - tmp_pos + glm::vec2(0.0, -1.0)) * speed * dt;
 }
 void Ball::Draw()
 {

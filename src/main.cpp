@@ -94,14 +94,14 @@ void MoveToBorders()
 {
 	for (Ball* ball : balls)
 	{
-		if(ball->position.x < -screen_width)
-			ball->position.x = -screen_width;
-		if(ball->position.x > screen_width)
-			ball->position.x = screen_width;
-		if(ball->position.y < -screen_height)
-			ball->position.y = -screen_height;
-		if(ball->position.y > screen_height)
-			ball->position.y = screen_height;
+		if(ball->position.x < -screen_width / 2.0 + 5.0)
+			ball->position.x = -screen_width / 2.0 + 5.0;
+		if(ball->position.x > screen_width / 2.0 - 5.0)
+			ball->position.x = screen_width / 2.0 - 5.0;
+		if(ball->position.y < -screen_height / 2.0 + 5.0)
+			ball->position.y = -screen_height / 2.0 + 5.0;
+		if(ball->position.y > screen_height / 2.0 - 5.0)
+			ball->position.y = screen_height / 2.0 - 5.0;
 	}
 }
 void Update(float dt)
@@ -110,8 +110,8 @@ void Update(float dt)
 	{
 		ball->Update(dt);
 	}
-	MoveToBorders();
 	Collision();
+	MoveToBorders();
 }
 void Collision()
 {
@@ -146,7 +146,7 @@ int main()
 		"../src/shaders/fragment.txt"
 	);
 
-	// Creating balls
+	// Creating model for balls
 	Model* model = new Model(shader);
 
 	// Set delta time
@@ -189,10 +189,11 @@ int main()
 		time_for_spawn_ball += dt;
 		if (spawn_ball_ratio <= time_for_spawn_ball)
 		{
-			balls.push_back(new Ball(glm::vec2(-340.0 + count, 0.0), model));
-			balls.push_back(new Ball(glm::vec2(-340.0 + count + 10.f, 0.0), model));
-			balls.push_back(new Ball(glm::vec2(-340.0 + count + 20.f, 0.0), model));
-			balls.push_back(new Ball(glm::vec2(-340.0 + count + 30.f, 0.0), model));
+			float move = ((int)count % 300);
+			balls.push_back(new Ball(glm::vec2(-300.0 + move, 200.0), model));
+			balls.push_back(new Ball(glm::vec2(-300.0 + move + 10.f, 200.0), model));
+			balls.push_back(new Ball(glm::vec2(-300.0 + move + 20.f, 200.0), model));
+			balls.push_back(new Ball(glm::vec2(-300.0 + move + 30.f, 200.0), model));
 			count += 4.f;
 			time_for_spawn_ball = 0.f;
 		}
