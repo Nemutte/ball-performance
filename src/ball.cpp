@@ -1,7 +1,7 @@
 #include "ball.h"
 #include "model.h"
 
-Ball::Ball(glm::vec2 pos, Model* model) : position{ pos }, last_position{ pos }, model{ model }, radius{ 5.0 }, speed{ 50.0 }
+Ball::Ball(glm::vec2 pos, Model* model) : position{ pos }, last_position{ pos }, model{ model }, radius{ 5.0 }, speed{ 100.0 }
 {
 
 }
