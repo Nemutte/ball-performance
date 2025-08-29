@@ -1,11 +1,30 @@
 #pragma once
 #include <glm/glm.hpp>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 
 class Ball
 {
 public:
 	glm::vec3 position;
 	float radius;
+	bool fixed;
+	bool drawable;
+
+private:
+	unsigned int VAO, vertex_count;
+	unsigned int VBO;
+
+public:
+	Ball(float x, float y, float z, float r);
+	Ball(glm::vec3 pos, float r);
+	Ball(float x, float y, float z, float r, bool fixed);
+	Ball(glm::vec3 pos, float r, bool fixed);
+	
+	~Ball();
+
+	void CreateDrawableModel();
+	void Draw();
 };
 
 class Cylinder
@@ -34,3 +53,10 @@ class PolygonFigure3d
 public:
 
 };
+
+bool DetectCollisionBallvsBall(Ball* b1, Ball* b2, float& distance);
+
+void SolveCollisionBallvsBall(Ball* b1, Ball* b2);
+
+unsigned int make_shader();
+unsigned int make_module(unsigned int module_type, const char* shaderSrc);

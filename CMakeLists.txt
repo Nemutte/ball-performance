@@ -18,6 +18,8 @@ add_executable(ball-performance
 	src/model.h
 	src/collision.cpp
 	src/collision.h
+	src/camera.cpp
+	src/camera.h
 	src/glad.c
 )
 

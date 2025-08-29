@@ -3,7 +3,7 @@
 #include "config.h"
 class Model;
 
-class Ball
+class Circle
 {
 public:
 	glm::vec2 position;
@@ -11,8 +11,8 @@ public:
 	float radius;
 	float speed;
 
-	Ball(glm::vec2 pos, Model* model);
-	~Ball();
+	Circle(glm::vec2 pos, Model* model);
+	~Circle();
 
 	void Update(float dt);
 	void Draw();
@@ -21,5 +21,5 @@ private:
 	Model* model;
 };
 
-bool DetectCollision(Ball* a, Ball* b);
-void SolveCollision(Ball* a, Ball* b);
+bool DetectCollision(Circle* a, Circle* b);
+void SolveCollision(Circle* a, Circle* b);
