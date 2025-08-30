@@ -6,6 +6,8 @@
 
 #define M_PI  3.14159265
 
+hib::Ball testB = hib::Ball(glm::vec3(0, 0, 0), 1.0);
+
 GLFWwindow* window;
 unsigned int shader2d;
 unsigned int shader3d;

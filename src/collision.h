@@ -3,6 +3,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+namespace hib
+{
 class Ball
 {
 public:
@@ -60,3 +62,7 @@ void SolveCollisionBallvsBall(Ball* b1, Ball* b2);
 
 unsigned int make_shader();
 unsigned int make_module(unsigned int module_type, const char* shaderSrc);
+}
+
+
+

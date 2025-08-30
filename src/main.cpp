@@ -166,23 +166,26 @@ void Draw3d()
 
 	for (Ball* ball : balls)
 	{
-		body_model = glm::translate(glm::mat4(1.0f), ball->position);
+		body_model = glm::translate(glm::mat4(1.0f), ball->collision_body->position);
 		glUniformMatrix4fv(body_location, 1, GL_FALSE, glm::value_ptr(body_model));
 		ball->Draw();
 	}
+	body_model = glm::translate(glm::mat4(1.0f), testB.position);
+	glUniformMatrix4fv(body_location, 1, GL_FALSE, glm::value_ptr(body_model));
+	testB.Draw();
 }
 void MoveToBorders()
 {
 	for (Circle* circle : circles)
 	{
-		if(circle->position.x < -screen_width / 2.0 + 5.0)
-			circle->position.x = -screen_width / 2.0 + 5.0;
-		if(circle->position.x > screen_width / 2.0 - 5.0)
-			circle->position.x = screen_width / 2.0 - 5.0;
-		if(circle->position.y < -screen_height / 2.0 + 5.0)
-			circle->position.y = -screen_height / 2.0 + 5.0;
-		if(circle->position.y > screen_height / 2.0 - 5.0)
-			circle->position.y = screen_height / 2.0 - 5.0;
+		if(circle->position.x < -screen_width / 2.0f + 5.0f)
+			circle->position.x = -screen_width / 2.0f + 5.0f;
+		if(circle->position.x > screen_width / 2.0f - 5.0f)
+			circle->position.x = screen_width / 2.0f - 5.0f;
+		if(circle->position.y < -screen_height / 2.0f + 5.0f)
+			circle->position.y = -screen_height / 2.0f + 5.0f;
+		if(circle->position.y > screen_height / 2.0f - 5.0f)
+			circle->position.y = screen_height / 2.0f - 5.0f;
 	}
 }
 void Update2d(float dt)
@@ -200,8 +203,6 @@ void Update3d(float dt)
 	{
 		//ball->position+=glm::vec3(0.01, 0, 0);
 	}
-	Collision();
-	MoveToBorders();
 }
 void Collision()
 {
@@ -316,19 +317,19 @@ int StartSimulation3d()
 	glfwSetCursorPos(window, screen_width / 2.0, screen_height / 2.0);
 
 	// Create Shaders
-	shader3d = make_shader();
+	shader3d = hib::make_shader();
 
 	//Create Balls
-	balls.push_back(new Ball(0, 0, 0, 1));
+	balls.push_back(new Ball(glm::vec3(0.0, 0.0, 0.0), 1.0));
 
 	// Creating model for balls
 	for (Ball* ball : balls)
 	{
-		ball->CreateDrawableModel();
+		ball->collision_body->CreateDrawableModel();
 	}
-
+	testB.CreateDrawableModel();
 	// Setup Camera and perspective
-	Camera* camera = new Camera(glm::vec3(0.0, 1.0, -1.0));
+	Camera* camera = new Camera(glm::vec3(0.0, 1.0, 1.0));
 	projection = glm::perspective(45.0f, (float)screen_width / screen_height, 0.1f, 30.0f);
 
 	// Set delta time

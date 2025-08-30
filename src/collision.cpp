@@ -1,6 +1,8 @@
 #include "collision.h"
 #include <iostream>
 
+namespace hib
+{
 bool DetectCollisionBallvsBall(Ball* b1, Ball* b2, float& distance)
 {
 	glm::vec3 vec = b2->position - b1->position;
@@ -73,22 +75,21 @@ void Ball::CreateDrawableModel()
 {
 	std::vector<float> data;
 
-	data.push_back(-1.0);
-	data.push_back(0.0);
-	data.push_back(0.0);
+	data.push_back(-1.0f);
+	data.push_back(0.0f);
+	data.push_back(0.0f);
 
-	data.push_back(1.0);
-	data.push_back(0.0);
-	data.push_back(0.0);
+	data.push_back(1.0f);
+	data.push_back(0.0f);
+	data.push_back(0.0f);
 
-	data.push_back(0.0);
-	data.push_back(1.0);
-	data.push_back(0.0);
+	data.push_back(0.0f);
+	data.push_back(1.0f);
+	data.push_back(0.0f);
 
-	data.push_back(0.0);
-	data.push_back(-1.0);
-	data.push_back(0.0);
-
+	data.push_back(0.0f);
+	data.push_back(-1.0f);
+	data.push_back(0.0f);
 
 	vertex_count = 4;
 
@@ -98,7 +99,7 @@ void Ball::CreateDrawableModel()
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), data.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 24, (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12, (void*)0);
 	glEnableVertexAttribArray(0);
 	drawable = true;
 }
@@ -107,7 +108,7 @@ void Ball::Draw()
 	if (drawable)
 	{
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_LINES, 0, vertex_count);
+		glDrawArrays(GL_LINE, 0, vertex_count);
 	}
 }
 
@@ -157,4 +158,6 @@ unsigned int make_module(unsigned int module_type, const char* shaderSrc)
 	}
 
 	return shaderModule;
+}
+
 }
