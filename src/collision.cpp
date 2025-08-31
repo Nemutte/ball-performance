@@ -109,7 +109,7 @@ void Ball::Draw()
 	if (drawable)
 	{
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_LINE, 0, vertex_count);
+		glDrawArrays(GL_LINES, 0, vertex_count);
 	}
 }
 
@@ -129,7 +129,7 @@ unsigned int make_shader()
 	glLinkProgram(shader);
 
 	int success;
-	glGetShaderiv(shader, GL_LINK_STATUS, &success);
+	glGetProgramiv(shader, GL_LINK_STATUS, &success);
 	if (!success)
 	{
 		char errorLog[1024];

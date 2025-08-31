@@ -160,7 +160,6 @@ void Draw3d()
 	unsigned int body_proj_location = glGetUniformLocation(shader3d, "projection");
 
 	glm::mat4 body_model = glm::mat4(1.0f);
-	//glUniformMatrix4fv(body_location, 1, GL_FALSE, glm::value_ptr(body_model));
 	glUniformMatrix4fv(body_view_location, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(body_proj_location, 1, GL_FALSE, glm::value_ptr(projection));
 	for (Ball* ball : balls)
@@ -169,9 +168,6 @@ void Draw3d()
 		glUniformMatrix4fv(body_location, 1, GL_FALSE, glm::value_ptr(body_model));
 		ball->Draw();
 	}
-	body_model = glm::translate(glm::mat4(1.0f), testB.position);
-	glUniformMatrix4fv(body_location, 1, GL_FALSE, glm::value_ptr(body_model));
-	testB.Draw();
 }
 void MoveToBorders()
 {
@@ -328,10 +324,9 @@ int StartSimulation3d()
 	{
 		ball->collision_body->CreateDrawableModel();
 	}
-	testB.CreateDrawableModel();
 	// Setup Camera and perspective
 	Camera* camera = new Camera(glm::vec3(0.0, 1.0, 1.0));
-	projection = glm::perspective(45.0f, (float)screen_width / screen_height, 0.1f, 30.0f);
+	projection = glm::perspective(glm::radians(45.0f), (float)screen_width / screen_height, 0.1f, 30.0f);
 
 	// Set delta time
 	float last_time = (float)glfwGetTime();
