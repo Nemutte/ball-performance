@@ -47,19 +47,19 @@ void SolveCollisionBallvsBall(Ball* b1, Ball* b2)
 
 Ball::Ball(float x, float y, float z, float r) :position{ x, y, z }, radius{ r }, fixed{ false }, drawable{ false }
 {
-
+	COUNT_BALLS++;
 }
 Ball::Ball(glm::vec3 pos, float r) :position{ pos }, radius{ r }, fixed{ false }, drawable{ false }
 {
-
+	COUNT_BALLS++;
 }
 Ball::Ball(float x, float y, float z, float r, bool fixed) :position{ x, y, z }, radius{ r }, fixed{ false }, drawable{ false }
 {
-
+	COUNT_BALLS++;
 }
 Ball::Ball(glm::vec3 pos, float r, bool fixed) :position{ pos }, radius{ r }, fixed{ false }, drawable{ false }
 {
-
+	COUNT_BALLS++;
 }
 
 Ball::~Ball()
@@ -69,6 +69,7 @@ Ball::~Ball()
 		glDeleteVertexArrays(1, &VAO);
 		glDeleteBuffers(1, &VBO);
 	}
+	COUNT_BALLS--;
 }
 
 void Ball::CreateDrawableModel()

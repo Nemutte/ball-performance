@@ -163,7 +163,6 @@ void Draw3d()
 	//glUniformMatrix4fv(body_location, 1, GL_FALSE, glm::value_ptr(body_model));
 	glUniformMatrix4fv(body_view_location, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(body_proj_location, 1, GL_FALSE, glm::value_ptr(projection));
-
 	for (Ball* ball : balls)
 	{
 		body_model = glm::translate(glm::mat4(1.0f), ball->collision_body->position);
@@ -249,7 +248,9 @@ int StartSimulation2d()
 	double crntTime = 0.0;
 	double timeDiff;
 	unsigned int counter = 0;
-	//glfwSwapInterval(0);
+
+	// wy³¹czenie Vsync (¿eby nie ograniczaæ FPS do odœwierzania monitora)
+	glfwSwapInterval(0);
 
 	// Setup for spawn ball
 	float time_for_spawn_ball = 0.f;
@@ -341,7 +342,9 @@ int StartSimulation3d()
 	double crntTime = 0.0;
 	double timeDiff;
 	unsigned int counter = 0;
-	//glfwSwapInterval(0);
+	
+	// wy³¹czenie Vsync (¿eby nie ograniczaæ FPS do odœwierzania monitora)
+	glfwSwapInterval(0);
 
 	// Setup for spawn ball
 	float time_for_spawn_ball = 0.f;
@@ -389,6 +392,7 @@ int StartSimulation3d()
 		Draw3d();
 
 		//printf("camera: x = %f, y = %f, z = %f\n", camera->position.x, camera->position.y, camera->position.z);
+		//printf("balls = %i\n", hib::Ball::COUNT_BALLS);
 
 		glfwSwapBuffers(window);
 	}

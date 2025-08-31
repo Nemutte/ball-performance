@@ -8,6 +8,7 @@ namespace hib
 class Ball
 {
 public:
+	inline static int COUNT_BALLS = 0;
 	glm::vec3 position;
 	float radius;
 	bool fixed;
