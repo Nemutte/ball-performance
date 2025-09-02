@@ -55,6 +55,6 @@ void Ball::Update(float dt)
 {
 	glm::vec3 tmp_pos = last_position;
 	last_position = position;
-	position += (position - tmp_pos + glm::vec3(0.0, -1.0, 0.0)) * speed * dt;
+	position += (position - tmp_pos + glm::vec3(0.0, -0.05, 0.0)) * speed * dt;
 	collision_body->position = position;
 }

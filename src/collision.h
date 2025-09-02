@@ -3,6 +3,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+
+#define M_PI  3.14159265
+
 namespace hib
 {
 class Ball
@@ -28,6 +31,9 @@ public:
 
 	void CreateDrawableModel();
 	void Draw();
+
+private:
+	std::vector<float> CreateDataModel();
 };
 
 class Cylinder

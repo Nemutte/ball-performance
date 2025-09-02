@@ -164,12 +164,12 @@ void Draw3d()
 	glUniformMatrix4fv(body_proj_location, 1, GL_FALSE, glm::value_ptr(projection));
 	for (Ball* ball : balls)
 	{
-		body_model = glm::translate(glm::mat4(1.0f), ball->collision_body->position);
+		body_model = glm::translate(glm::mat4(1.0f), ball->position);
 		glUniformMatrix4fv(body_location, 1, GL_FALSE, glm::value_ptr(body_model));
 		ball->Draw();
 	}
 }
-void MoveToBorders()
+void MoveToBorders2d()
 {
 	for (Circle* circle : circles)
 	{
@@ -183,23 +183,47 @@ void MoveToBorders()
 			circle->position.y = screen_height / 2.0f - 5.0f;
 	}
 }
+void MoveToBorders3d()
+{
+	float width = 10.f;
+	float height = 10.f;
+	float deep = 10.f;
+	for (Ball* ball : balls)
+	{
+		if (ball->position.x < -width + 1.0f)
+			ball->position.x = -width + 1.0f;
+		if (ball->position.x > width - 1.0f)
+			ball->position.x = width - 1.0f;
+		if (ball->position.y < -height + 1.0f)
+			ball->position.y = -height + 1.0f;
+		if (ball->position.y > height - 1.0f)
+			ball->position.y = height - 1.0f;
+		if (ball->position.z < -deep + 1.0f)
+			ball->position.z = -deep + 1.0f;
+		if (ball->position.z > deep - 1.0f)
+			ball->position.z = deep - 1.0f;
+		ball->collision_body->position = ball->position;
+	}
+}
 void Update2d(float dt)
 {
 	for (Circle* circle : circles)
 	{
 		circle->Update(dt);
 	}
-	Collision();
-	MoveToBorders();
+	Collision2d();
+	MoveToBorders2d();
 }
 void Update3d(float dt)
 {
 	for (Ball* ball : balls)
 	{
-		//ball->position+=glm::vec3(0.01, 0, 0);
+		ball->Update(dt);
 	}
+	Collision3d();
+	MoveToBorders3d();
 }
-void Collision()
+void Collision2d()
 {
 	for (Circle* a : circles)
 	{
@@ -211,6 +235,21 @@ void Collision()
 				{
 					SolveCollision(a, b);
 				}
+			}
+		}
+	}
+}
+void Collision3d()
+{
+	for (Ball* a : balls)
+	{
+		for (Ball* b : balls)
+		{
+			if (a != b)
+			{
+				hib::SolveCollisionBallvsBall(a->collision_body, b->collision_body);
+				a->position = a->collision_body->position;
+				b->position = b->collision_body->position;
 			}
 		}
 	}
@@ -325,7 +364,7 @@ int StartSimulation3d()
 		ball->collision_body->CreateDrawableModel();
 	}
 	// Setup Camera and perspective
-	Camera* camera = new Camera(glm::vec3(0.0, 1.0, 1.0));
+	Camera* camera = new Camera(glm::vec3(0.0, 2.0, 5.0));
 	projection = glm::perspective(glm::radians(45.0f), (float)screen_width / screen_height, 0.1f, 30.0f);
 
 	// Set delta time
@@ -372,8 +411,25 @@ int StartSimulation3d()
 		time_for_spawn_ball += dt;
 		if (spawn_ball_ratio <= time_for_spawn_ball)
 		{
-			float move = ((int)count % 300);
-			//count += 4.f;
+			float move = ((int)count % 30);
+			Ball* b;
+			b = new Ball(glm::vec3(-9.0 + 0.5 * move, 8.f, 1.f), 1.f);
+			b->collision_body->CreateDrawableModel();
+			balls.push_back(b);
+
+			b = new Ball(glm::vec3(-7.0 + 0.5 * move, 8.f, 1.f), 1.f);
+			b->collision_body->CreateDrawableModel();
+			balls.push_back(b);
+
+			b = new Ball(glm::vec3(-5.0 + 0.5 * move, 8.f, 1.f), 1.f);
+			b->collision_body->CreateDrawableModel();
+			balls.push_back(b);
+
+			b = new Ball(glm::vec3(-3.0 + 0.5 * move, 8.f, 1.f), 1.f);
+			b->collision_body->CreateDrawableModel();
+			balls.push_back(b);
+			
+			count += 4.f;
 			time_for_spawn_ball = 0.f;
 		}
 

@@ -15,7 +15,6 @@ bool DetectCollisionBallvsBall(Ball* b1, Ball* b2, float& distance)
 
 	return false;
 }
-
 void SolveCollisionBallvsBall(Ball* b1, Ball* b2)
 {
 	glm::vec3 vec = b2->position - b1->position;
@@ -74,25 +73,8 @@ Ball::~Ball()
 
 void Ball::CreateDrawableModel()
 {
-	std::vector<float> data;
-
-	data.push_back(-1.0f);
-	data.push_back(0.0f);
-	data.push_back(0.0f);
-
-	data.push_back(1.0f);
-	data.push_back(0.0f);
-	data.push_back(0.0f);
-
-	data.push_back(0.0f);
-	data.push_back(1.0f);
-	data.push_back(0.0f);
-
-	data.push_back(0.0f);
-	data.push_back(-1.0f);
-	data.push_back(0.0f);
-
-	vertex_count = 4;
+	std::vector<float> data = CreateDataModel();
+	vertex_count = data.size() / 3;
 
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
@@ -103,6 +85,7 @@ void Ball::CreateDrawableModel()
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12, (void*)0);
 	glEnableVertexAttribArray(0);
 	drawable = true;
+
 }
 void Ball::Draw()
 {
@@ -113,6 +96,53 @@ void Ball::Draw()
 	}
 }
 
+std::vector<float> Ball::CreateDataModel()
+{
+	// variable for data model
+	std::vector<float> data;
+
+	std::vector<glm::vec3*> vertices;
+
+	glm::vec3* start = new glm::vec3(radius, 0.0, 0.0);
+
+	// crating vertices of ball
+	int count_angle = (radius + 5);
+	float angle_base = M_PI / (float)count_angle;
+	float angle = angle_base;
+
+	vertices.push_back(start);
+	while (angle < M_PI)
+	{
+		glm::vec3* new_vertices1 = new glm::vec3(cos(angle) * radius, sin(angle) * radius, 0.0);
+		vertices.push_back(new_vertices1);
+		float angle_tmp = angle_base;
+		while (angle_tmp < 2.f * M_PI)
+		{
+			glm::vec3* new_vertices2 = new glm::vec3(new_vertices1->x, sin(angle_tmp + M_PI / 2.f) * new_vertices1->y, cos(angle_tmp + M_PI / 2.f) * new_vertices1->y);
+			vertices.push_back(new_vertices2);
+			angle_tmp += angle_base;
+		}
+		angle += angle_base;
+	}
+	printf("vertices count = %d\n", vertices.size());
+
+	// create data for OpenGL from vertices
+	for (int i = 0; i < vertices.size() - 1; i++)
+	{
+		data.push_back(vertices[i]->x);
+		data.push_back(vertices[i]->y);
+		data.push_back(vertices[i]->z);
+
+		data.push_back(vertices[i + 1]->x);
+		data.push_back(vertices[i + 1]->y);
+		data.push_back(vertices[i + 1]->z);
+	}
+	// cleaning
+	for (auto v : vertices) delete v;
+	vertices.clear();
+
+	return data;
+}
 unsigned int make_shader()
 {
 	std::vector<unsigned int> modules;
