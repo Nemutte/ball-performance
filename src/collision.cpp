@@ -103,28 +103,31 @@ std::vector<float> Ball::CreateDataModel()
 
 	std::vector<glm::vec3*> vertices;
 
-	glm::vec3* start = new glm::vec3(radius, 0.0, 0.0);
+	//glm::vec3* start = new glm::vec3(radius, 0.0, 0.0);
 
 	// crating vertices of ball
 	int count_angle = (radius + 5);
 	float angle_base = M_PI / (float)count_angle;
-	float angle = angle_base;
+	float angle = 0.0;
 
-	vertices.push_back(start);
+	//vertices.push_back(start);
 	while (angle < M_PI)
 	{
 		glm::vec3* new_vertices1 = new glm::vec3(cos(angle) * radius, sin(angle) * radius, 0.0);
 		vertices.push_back(new_vertices1);
 		float angle_tmp = angle_base;
-		while (angle_tmp < 2.f * M_PI)
+		if( !(sin(angle) < 1.e-5 && sin(angle) > -1.e-5))
 		{
-			glm::vec3* new_vertices2 = new glm::vec3(new_vertices1->x, sin(angle_tmp + M_PI / 2.f) * new_vertices1->y, cos(angle_tmp + M_PI / 2.f) * new_vertices1->y);
-			vertices.push_back(new_vertices2);
-			angle_tmp += angle_base;
+			while (angle_tmp < 2.f * M_PI - angle_base)
+			{
+				glm::vec3* new_vertices2 = new glm::vec3(new_vertices1->x, sin(angle_tmp + M_PI / 2.f) * new_vertices1->y, cos(angle_tmp + M_PI / 2.f) * new_vertices1->y);
+				vertices.push_back(new_vertices2);
+				angle_tmp += angle_base;
+			}
 		}
 		angle += angle_base;
 	}
-	printf("vertices count = %d\n", vertices.size());
+	printf("vertices count = %d, count_angle = %d\n", vertices.size(), count_angle);
 
 	// create data for OpenGL from vertices
 	for (int i = 0; i < vertices.size() - 1; i++)

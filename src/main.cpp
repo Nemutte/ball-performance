@@ -412,6 +412,7 @@ int StartSimulation3d()
 		if (spawn_ball_ratio <= time_for_spawn_ball)
 		{
 			float move = ((int)count % 30);
+			/*
 			Ball* b;
 			b = new Ball(glm::vec3(-9.0 + 0.5 * move, 8.f, 1.f), 1.f);
 			b->collision_body->CreateDrawableModel();
@@ -430,6 +431,7 @@ int StartSimulation3d()
 			balls.push_back(b);
 			
 			count += 4.f;
+			*/
 			time_for_spawn_ball = 0.f;
 		}
 

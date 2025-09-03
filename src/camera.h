@@ -5,7 +5,7 @@ class Camera
 {
 public:
 	bool w, a, s, d, space_bar, shift;
-	float speed = 10.f;
+	float speed = 15.f;
 	glm::vec3 position;
 	Camera(glm::vec3 pos);
 	~Camera();

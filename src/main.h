@@ -9,8 +9,8 @@
 GLFWwindow* window;
 unsigned int shader2d;
 unsigned int shader3d;
-int screen_width = 640;
-int screen_height = 480;
+int screen_width = 1280;
+int screen_height = 740;
 float spawn_ball_ratio = 0.3f;
 
 const float mouseSensitivity = 0.002f;  // Czu³oœæ obrotu
