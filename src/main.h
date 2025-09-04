@@ -11,15 +11,25 @@ unsigned int shader2d;
 unsigned int shader3d;
 int screen_width = 1280;
 int screen_height = 740;
-float spawn_ball_ratio = 0.3f;
+
+// 3d
+float width3d = 20.f;
+float height3d = 10.f;
+float deep3d = 20.f;
+
+bool fixed_update = true;
+float update_fps = 0.016f;
 
 const float mouseSensitivity = 0.002f;  // Czu³oœæ obrotu
 float cameraAngle_alfa = 0.f;
 float cameraAngle_beta = 0.f;
-bool CLOSE = false;
 
 glm::mat4 view;
 glm::mat4 projection;
+// 2d and 3d
+float spawn_ball_ratio = 0.3f;
+
+bool CLOSE = false;
 
 std::vector<Circle*> circles;
 std::vector<Ball*> balls;

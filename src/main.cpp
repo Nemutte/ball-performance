@@ -185,23 +185,20 @@ void MoveToBorders2d()
 }
 void MoveToBorders3d()
 {
-	float width = 10.f;
-	float height = 10.f;
-	float deep = 10.f;
 	for (Ball* ball : balls)
 	{
-		if (ball->position.x < -width + 1.0f)
-			ball->position.x = -width + 1.0f;
-		if (ball->position.x > width - 1.0f)
-			ball->position.x = width - 1.0f;
-		if (ball->position.y < -height + 1.0f)
-			ball->position.y = -height + 1.0f;
-		if (ball->position.y > height - 1.0f)
-			ball->position.y = height - 1.0f;
-		if (ball->position.z < -deep + 1.0f)
-			ball->position.z = -deep + 1.0f;
-		if (ball->position.z > deep - 1.0f)
-			ball->position.z = deep - 1.0f;
+		if (ball->position.x < -width3d + 1.0f)
+			ball->position.x = -width3d + 1.0f;
+		if (ball->position.x > width3d - 1.0f)
+			ball->position.x = width3d - 1.0f;
+		if (ball->position.y < -height3d + 1.0f)
+			ball->position.y = -height3d + 1.0f;
+		if (ball->position.y > height3d - 1.0f)
+			ball->position.y = height3d - 1.0f;
+		if (ball->position.z < -deep3d + 1.0f)
+			ball->position.z = -deep3d + 1.0f;
+		if (ball->position.z > deep3d - 1.0f)
+			ball->position.z = deep3d - 1.0f;
 		ball->collision_body->position = ball->position;
 	}
 }
@@ -296,7 +293,7 @@ int StartSimulation2d()
 	{
 		glfwPollEvents();
 		// Calculate delta time
-		float dt = (float)glfwGetTime() - last_time;
+		dt = (float)glfwGetTime() - last_time;
 		last_time = (float)glfwGetTime();
 
 		// FPS
@@ -364,12 +361,15 @@ int StartSimulation3d()
 		ball->collision_body->CreateDrawableModel();
 	}
 	// Setup Camera and perspective
-	Camera* camera = new Camera(glm::vec3(0.0, 2.0, 5.0));
-	projection = glm::perspective(glm::radians(45.0f), (float)screen_width / screen_height, 0.1f, 30.0f);
+	Camera* camera = new Camera(glm::vec3(0.0, 2.0, 20.0));
+	projection = glm::perspective(glm::radians(45.0f), (float)screen_width / screen_height, 0.1f, 300.0f);
 
 	// Set delta time
 	float last_time = (float)glfwGetTime();
 	float dt = 0.f;
+
+	// fixed update fps
+	float fixed_update_time = 0.0;
 
 	// Set timers for FPS
 	double prevTime = 0.0;
@@ -388,8 +388,10 @@ int StartSimulation3d()
 	{
 		glfwPollEvents();
 		// Calculate delta time
-		float dt = (float)glfwGetTime() - last_time;
-		last_time = (float)glfwGetTime();
+		float time = (float)glfwGetTime();
+		dt = time - last_time;
+		fixed_update_time += dt;
+		last_time = time;
 
 		Input(window, camera);
 		camera->Move(dt);
@@ -412,6 +414,7 @@ int StartSimulation3d()
 		{
 			float move = ((int)hib::Ball::COUNT_BALLS % 30);
 			/*
+			*/
 			Ball* b;
 			b = new Ball(glm::vec3(-9.0 + 0.5 * move, 8.f, 1.f), 1.f);
 			b->collision_body->CreateDrawableModel();
@@ -429,7 +432,6 @@ int StartSimulation3d()
 			b->collision_body->CreateDrawableModel();
 			balls.push_back(b);
 			
-			*/
 			time_for_spawn_ball = 0.f;
 		}
 
@@ -439,7 +441,18 @@ int StartSimulation3d()
 		glm::vec3 up = { 0.0f, 1.0f, 0.0f };
 		view = glm::lookAt(camera->position, camera->GetCameraTarget(), up);
 
-		Update3d(dt);
+		if (fixed_update)
+		{
+			if (fixed_update_time > update_fps)
+			{
+				fixed_update_time = 0.0f;
+				Update3d(update_fps);
+			}
+		}
+		else
+		{
+			Update3d(dt);
+		}
 		Draw3d();
 
 		//printf("camera: x = %f, y = %f, z = %f\n", camera->position.x, camera->position.y, camera->position.z);

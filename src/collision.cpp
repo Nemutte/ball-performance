@@ -128,7 +128,7 @@ std::vector<float> Ball::CreateDataModel()
 		}
 		angle += angle_base;
 	}
-	printf("vertices count = %d, count_angle = %d\n", vertices.size(), count_angle);
+	//printf("vertices count = %d, count_angle = %d\n", vertices.size(), count_angle);
 
 	// create data for OpenGL from vertices to TRIANGLES
 	for (int i = 1; i<count_angle*2+1; i++)
@@ -266,7 +266,7 @@ unsigned int make_shader()
 		"{"
 		"pos = (model * vec4(vertexPos, 1.0)).xyz;"
 		"vector_to_pos = vertexPos;"
-		"light_pos = vec3(-4.0, 4.0, 0.0);"
+		"light_pos = vec3(0.0, 0.0, 0.0);"
 		"gl_Position = projection * view * model * vec4(vertexPos, 1.0);"
 		"}";// gl_Position = vec4(1.0, 0.0, 0.0, 1.0);}";	gl_Position = projection * view * model * vec4(vertexPos, 1.0); }";
 	const char* shaderFrag = "#version 330 core\n"
@@ -277,7 +277,7 @@ unsigned int make_shader()
 		"void main()"
 		"{"
 		"vec3 normal = vector_to_pos;"
-		"float max_d = 23.0;"
+		"float max_d = 50.0;"
 		"vec3 light_dir = normalize(light_pos - pos);"
 		"float distance = length(light_pos - pos);"
 		"float diff = max(dot(normalize(normal), light_dir), 0.0);"
