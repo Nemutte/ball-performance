@@ -382,7 +382,6 @@ int StartSimulation3d()
 
 	// Setup for spawn ball
 	float time_for_spawn_ball = 0.f;
-	float count = 0.0;
 
 	// Program loop
 	while (!glfwWindowShouldClose(window) && !CLOSE)
@@ -401,7 +400,7 @@ int StartSimulation3d()
 		if (timeDiff >= 1.0 / 30.0)
 		{
 			std::string FPS = std::to_string((1.0 / timeDiff) * counter);
-			std::string newTitle = "balls: " + std::to_string(count) + " | " + FPS + " FPS";
+			std::string newTitle = "balls: " + std::to_string(hib::Ball::COUNT_BALLS) + " | " + FPS + " FPS";
 			glfwSetWindowTitle(window, newTitle.c_str());
 			prevTime = crntTime;
 			counter = 0;
@@ -411,7 +410,7 @@ int StartSimulation3d()
 		time_for_spawn_ball += dt;
 		if (spawn_ball_ratio <= time_for_spawn_ball)
 		{
-			float move = ((int)count % 30);
+			float move = ((int)hib::Ball::COUNT_BALLS % 30);
 			/*
 			Ball* b;
 			b = new Ball(glm::vec3(-9.0 + 0.5 * move, 8.f, 1.f), 1.f);
@@ -430,7 +429,6 @@ int StartSimulation3d()
 			b->collision_body->CreateDrawableModel();
 			balls.push_back(b);
 			
-			count += 4.f;
 			*/
 			time_for_spawn_ball = 0.f;
 		}

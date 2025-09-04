@@ -92,7 +92,8 @@ void Ball::Draw()
 	if (drawable)
 	{
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_LINES, 0, vertex_count);
+		//glDrawArrays(GL_LINES, 0, vertex_count);
+		glDrawArrays(GL_TRIANGLES, 0, vertex_count);
 	}
 }
 
@@ -129,7 +130,110 @@ std::vector<float> Ball::CreateDataModel()
 	}
 	printf("vertices count = %d, count_angle = %d\n", vertices.size(), count_angle);
 
-	// create data for OpenGL from vertices
+	// create data for OpenGL from vertices to TRIANGLES
+	for (int i = 1; i<count_angle*2+1; i++)
+	{
+		data.push_back(vertices[0]->x);
+		data.push_back(vertices[0]->y);
+		data.push_back(vertices[0]->z);
+
+		data.push_back(vertices[i]->x);
+		data.push_back(vertices[i]->y);
+		data.push_back(vertices[i]->z);
+
+		if (i == count_angle * 2)
+		{
+			data.push_back(vertices[1]->x);
+			data.push_back(vertices[1]->y);
+			data.push_back(vertices[1]->z);
+		}
+		else
+		{
+			data.push_back(vertices[i + 1]->x);
+			data.push_back(vertices[i + 1]->y);
+			data.push_back(vertices[i + 1]->z);
+		}
+	}
+	for (int i = 0; i<count_angle - 2;i++)
+	{
+		int index = i * count_angle * 2 + 1;
+		for (int j = index; j < index + count_angle * 2; j++)
+		{
+			data.push_back(vertices[j]->x);
+			data.push_back(vertices[j]->y);
+			data.push_back(vertices[j]->z);
+
+			if (j == index + count_angle * 2 - 1)
+			{
+				data.push_back(vertices[index]->x);
+				data.push_back(vertices[index]->y);
+				data.push_back(vertices[index]->z);
+			}
+			else
+			{
+				data.push_back(vertices[j+1]->x);
+				data.push_back(vertices[j+1]->y);
+				data.push_back(vertices[j+1]->z);
+			}
+
+			data.push_back(vertices[j + count_angle * 2]->x);
+			data.push_back(vertices[j + count_angle * 2]->y);
+			data.push_back(vertices[j + count_angle * 2]->z);
+
+			
+			data.push_back(vertices[j + count_angle * 2]->x);
+			data.push_back(vertices[j + count_angle * 2]->y);
+			data.push_back(vertices[j + count_angle * 2]->z);
+
+			if (j == index + count_angle * 2 - 1)
+			{
+				data.push_back(vertices[index]->x);
+				data.push_back(vertices[index]->y);
+				data.push_back(vertices[index]->z);
+
+				data.push_back(vertices[index + count_angle * 2]->x);
+				data.push_back(vertices[index + count_angle * 2]->y);
+				data.push_back(vertices[index + count_angle * 2]->z);
+			}
+			else
+			{
+				data.push_back(vertices[j+1]->x);
+				data.push_back(vertices[j+1]->y);
+				data.push_back(vertices[j+1]->z);
+
+				data.push_back(vertices[j + count_angle * 2+1]->x);
+				data.push_back(vertices[j + count_angle * 2+1]->y);
+				data.push_back(vertices[j + count_angle * 2+1]->z);
+			}
+
+		}
+	}
+	int index = vertices.size() - 1;
+	for (int i = index - 1; i > index - count_angle * 2 - 1; i--)
+	{
+		data.push_back(vertices[index]->x);
+		data.push_back(vertices[index]->y);
+		data.push_back(vertices[index]->z);
+
+		data.push_back(vertices[i]->x);
+		data.push_back(vertices[i]->y);
+		data.push_back(vertices[i]->z);
+
+		if (i == index - count_angle * 2)
+		{
+			data.push_back(vertices[index-1]->x);
+			data.push_back(vertices[index-1]->y);
+			data.push_back(vertices[index-1]->z);
+		}
+		else
+		{
+			data.push_back(vertices[i - 1]->x);
+			data.push_back(vertices[i - 1]->y);
+			data.push_back(vertices[i - 1]->z);
+		}
+	}
+	// create data for OpenGL from vertices to sectors
+	/*
 	for (int i = 0; i < vertices.size() - 1; i++)
 	{
 		data.push_back(vertices[i]->x);
@@ -140,6 +244,7 @@ std::vector<float> Ball::CreateDataModel()
 		data.push_back(vertices[i + 1]->y);
 		data.push_back(vertices[i + 1]->z);
 	}
+	*/
 	// cleaning
 	for (auto v : vertices) delete v;
 	vertices.clear();
@@ -149,10 +254,41 @@ std::vector<float> Ball::CreateDataModel()
 unsigned int make_shader()
 {
 	std::vector<unsigned int> modules;
-	const char* shaderSrc1 = "#version 330 core\nlayout(location = 0) in vec3 vertexPos;\nuniform mat4 model;\nuniform mat4 view;\nuniform mat4 projection;\nvoid main(){gl_Position = projection * view * model * vec4(vertexPos, 1.0);}";// gl_Position = vec4(1.0, 0.0, 0.0, 1.0);}";	gl_Position = projection * view * model * vec4(vertexPos, 1.0);}";
-	const char* shaderSrc2 = "#version 330 core\nout vec4 screenColor; void main() { screenColor = vec4(0.0, 1.0, 0.0, 1.0); }";
-	modules.push_back(make_module(GL_VERTEX_SHADER, shaderSrc1));
-	modules.push_back(make_module(GL_FRAGMENT_SHADER, shaderSrc2));
+	const char* shaderVer = "#version 330 core\n"
+		"layout(location = 0) in vec3 vertexPos;"
+		"out vec3 pos;"
+		"out vec3 vector_to_pos;"
+		"out vec3 light_pos;"
+		"uniform mat4 model;"
+		"uniform mat4 view;"
+		"uniform mat4 projection;"
+		"void main()"
+		"{"
+		"pos = (model * vec4(vertexPos, 1.0)).xyz;"
+		"vector_to_pos = vertexPos;"
+		"light_pos = vec3(-4.0, 4.0, 0.0);"
+		"gl_Position = projection * view * model * vec4(vertexPos, 1.0);"
+		"}";// gl_Position = vec4(1.0, 0.0, 0.0, 1.0);}";	gl_Position = projection * view * model * vec4(vertexPos, 1.0); }";
+	const char* shaderFrag = "#version 330 core\n"
+		"in vec3 pos;"
+		"in vec3 vector_to_pos;"
+		"in vec3 light_pos;"
+		"out vec4 screenColor;"
+		"void main()"
+		"{"
+		"vec3 normal = vector_to_pos;"
+		"float max_d = 23.0;"
+		"vec3 light_dir = normalize(light_pos - pos);"
+		"float distance = length(light_pos - pos);"
+		"float diff = max(dot(normalize(normal), light_dir), 0.0);"
+		"float attenuation = clamp(1.0 - (distance / max_d), 0.0, 1.0);"
+		"float light_intensity = diff * attenuation;"
+		"vec4 color = vec4(1.0, 1.0, 1.0, 1.0);"
+		"color.xyz *= light_intensity;"
+		"screenColor = color;"
+		"}";
+	modules.push_back(make_module(GL_VERTEX_SHADER, shaderVer));
+	modules.push_back(make_module(GL_FRAGMENT_SHADER, shaderFrag));
 
 	unsigned int shader = glCreateProgram();
 	for (unsigned int shaderModule : modules)
