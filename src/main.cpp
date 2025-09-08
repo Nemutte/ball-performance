@@ -353,7 +353,7 @@ int StartSimulation3d()
 	shader3d = hib::make_shader();
 
 	//Create Balls
-	balls.push_back(new Ball(glm::vec3(0.0, 0.0, 0.0), 1.0));
+	balls.push_back(new Ball(glm::vec3(1.0, 0.0, 0.0), 2.0));
 
 	// Creating model for balls
 	for (Ball* ball : balls)
@@ -420,7 +420,7 @@ int StartSimulation3d()
 			b->collision_body->CreateDrawableModel();
 			balls.push_back(b);
 
-			b = new Ball(glm::vec3(-7.0 + 0.5 * move, 8.f, 1.f), 1.f);
+			b = new Ball(glm::vec3(-7.0 + 0.5 * move, 8.f, 1.f), 0.5f);
 			b->collision_body->CreateDrawableModel();
 			balls.push_back(b);
 
@@ -428,7 +428,7 @@ int StartSimulation3d()
 			b->collision_body->CreateDrawableModel();
 			balls.push_back(b);
 
-			b = new Ball(glm::vec3(-3.0 + 0.5 * move, 8.f, 1.f), 1.f);
+			b = new Ball(glm::vec3(-3.0 + 0.5 * move, 8.f, 1.f), 2.f);
 			b->collision_body->CreateDrawableModel();
 			balls.push_back(b);
 			

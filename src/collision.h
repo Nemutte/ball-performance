@@ -39,9 +39,31 @@ private:
 class Cylinder
 {
 public:
+	inline static int COUNT_CYLINDERS = 0;
+	glm::vec3 position;
 	glm::vec3 pointA;
 	glm::vec3 pointB;
 	float radius;
+	bool fixed;
+	bool drawable;
+
+private:
+	unsigned int VAO, vertex_count;
+	unsigned int VBO;
+
+public:
+	Cylinder(float px, float py, float pz, float pAx, float pAy, float pAz, float pBx, float pBy, float pBz, float r);
+	Cylinder(glm::vec3 pos, glm::vec3 pA, glm::vec3 pB, float r);
+	Cylinder(float px, float py, float pz, float pAx, float pAy, float pAz, float pBx, float pBy, float pBz, float r, bool f);
+	Cylinder(glm::vec3 pos, glm::vec3 pA, glm::vec3 pB, float r, bool f);
+
+	~Cylinder();
+
+	void CreateDrawableModel();
+	void Draw();
+
+private:
+	std::vector<float> CreateDataModel();
 };
 
 class Ray3d

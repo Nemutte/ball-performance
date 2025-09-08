@@ -104,31 +104,23 @@ std::vector<float> Ball::CreateDataModel()
 
 	std::vector<glm::vec3*> vertices;
 
-	//glm::vec3* start = new glm::vec3(radius, 0.0, 0.0);
-
 	// crating vertices of ball
 	int count_angle = (radius + 5);
 	float angle_base = M_PI / (float)count_angle;
-	float angle = 0.0;
 
-	//vertices.push_back(start);
-	while (angle < M_PI)
+	for (int i = 0; i <= count_angle; i++)
 	{
-		glm::vec3* new_vertices1 = new glm::vec3(cos(angle) * radius, sin(angle) * radius, 0.0);
+		glm::vec3* new_vertices1 = new glm::vec3(cos(angle_base*i) * radius, sin(angle_base * i) * radius, 0.0);
 		vertices.push_back(new_vertices1);
-		float angle_tmp = angle_base;
-		if( !(sin(angle) < 1.e-5 && sin(angle) > -1.e-5))
+		if( i!= count_angle && i != 0)
 		{
-			while (angle_tmp < 2.f * M_PI - angle_base)
+			for(int j=1;j<count_angle*2;j++)
 			{
-				glm::vec3* new_vertices2 = new glm::vec3(new_vertices1->x, sin(angle_tmp + M_PI / 2.f) * new_vertices1->y, cos(angle_tmp + M_PI / 2.f) * new_vertices1->y);
+				glm::vec3* new_vertices2 = new glm::vec3(new_vertices1->x, sin(angle_base * j + M_PI / 2.f) * new_vertices1->y, cos(angle_base * j + M_PI / 2.f) * new_vertices1->y);
 				vertices.push_back(new_vertices2);
-				angle_tmp += angle_base;
 			}
 		}
-		angle += angle_base;
 	}
-	//printf("vertices count = %d, count_angle = %d\n", vertices.size(), count_angle);
 
 	// create data for OpenGL from vertices to TRIANGLES
 	for (int i = 1; i<count_angle*2+1; i++)
@@ -154,6 +146,8 @@ std::vector<float> Ball::CreateDataModel()
 			data.push_back(vertices[i + 1]->z);
 		}
 	}
+	/*
+	*/
 	for (int i = 0; i<count_angle - 2;i++)
 	{
 		int index = i * count_angle * 2 + 1;
@@ -251,6 +245,86 @@ std::vector<float> Ball::CreateDataModel()
 
 	return data;
 }
+
+Cylinder::Cylinder(float px, float py, float pz, float pAx, float pAy, float pAz, float pBx, float pBy, float pBz, float r)
+	:position{ glm::vec3(px, py, pz) }, pointA{ glm::vec3(pAx, pAy, pAz) }, pointB{ glm::vec3(pBx, pBy, pBz) }, radius{ r }, fixed{ false }, drawable{ false }
+{
+	COUNT_CYLINDERS++;
+}
+Cylinder::Cylinder(glm::vec3 pos, glm::vec3 pA, glm::vec3 pB, float r)
+	:position{ pos }, pointA{ pA }, pointB{ pB }, radius{ r }, fixed{ false }, drawable{ false }
+{
+	COUNT_CYLINDERS++;
+}
+Cylinder::Cylinder(float px, float py, float pz, float pAx, float pAy, float pAz, float pBx, float pBy, float pBz, float r, bool f)
+	:position{ glm::vec3(px, py, pz) }, pointA{ glm::vec3(pAx, pAy, pAz) }, pointB{ glm::vec3(pBx, pBy, pBz) }, radius{ r }, fixed{ f }, drawable{ false }
+{
+	COUNT_CYLINDERS++;
+}
+Cylinder::Cylinder(glm::vec3 pos, glm::vec3 pA, glm::vec3 pB, float r, bool f)
+	:position{ pos }, pointA{ pA }, pointB{ pB }, radius{ r }, fixed{ f }, drawable{ false }
+{
+	COUNT_CYLINDERS++;
+}
+
+Cylinder::~Cylinder()
+{
+	if (drawable)
+	{
+		glDeleteVertexArrays(1, &VAO);
+		glDeleteBuffers(1, &VBO);
+	}
+	COUNT_CYLINDERS--;
+}
+
+void Cylinder::CreateDrawableModel()
+{
+	std::vector<float> data = CreateDataModel();
+	vertex_count = data.size() / 3;
+
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), data.data(), GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12, (void*)0);
+	glEnableVertexAttribArray(0);
+	drawable = true;
+
+}
+void Cylinder::Draw()
+{
+	if (drawable)
+	{
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, vertex_count);
+	}
+}
+
+std::vector<float> Cylinder::CreateDataModel()
+{
+	// variable for data model
+	std::vector<float> data;
+
+	std::vector<glm::vec3*> vertices;
+
+	// crating vertices of cylinder
+
+	int count_angle = (radius + 5);
+	float angle_base = M_PI / (float)count_angle;
+
+
+
+	// create data for OpenGL from vertices to TRIANGLES
+	
+	// cleaning
+	for (auto v : vertices) delete v;
+	vertices.clear();
+
+	return data;
+}
+
 unsigned int make_shader()
 {
 	std::vector<unsigned int> modules;
