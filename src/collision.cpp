@@ -314,10 +314,128 @@ std::vector<float> Cylinder::CreateDataModel()
 	int count_angle = (radius + 5);
 	float angle_base = M_PI / (float)count_angle;
 
+	float len = glm::length(pointB - pointA);
+
+	for (int i = 0; i <= count_angle; i++)
+	{
+		if (i > count_angle / 2) len = 0.0;
+		glm::vec3* new_vertices1 = new glm::vec3(cos(angle_base * i) * radius + len, sin(angle_base * i) * radius, 0.0);
+		vertices.push_back(new_vertices1);
+		if (i != count_angle && i != 0)
+		{
+			for (int j = 1; j < count_angle * 2; j++)
+			{
+				glm::vec3* new_vertices2 = new glm::vec3(new_vertices1->x + len, sin(angle_base * j + M_PI / 2.f) * new_vertices1->y, cos(angle_base * j + M_PI / 2.f) * new_vertices1->y);
+				vertices.push_back(new_vertices2);
+			}
+
+		}
+	}
+	/// create data for OpenGL from vertices to TRIANGLES
+	for (int i = 1; i < count_angle * 2 + 1; i++)
+	{
+		data.push_back(vertices[0]->x);
+		data.push_back(vertices[0]->y);
+		data.push_back(vertices[0]->z);
+
+		data.push_back(vertices[i]->x);
+		data.push_back(vertices[i]->y);
+		data.push_back(vertices[i]->z);
+
+		if (i == count_angle * 2)
+		{
+			data.push_back(vertices[1]->x);
+			data.push_back(vertices[1]->y);
+			data.push_back(vertices[1]->z);
+		}
+		else
+		{
+			data.push_back(vertices[i + 1]->x);
+			data.push_back(vertices[i + 1]->y);
+			data.push_back(vertices[i + 1]->z);
+		}
+	}
+	/*
+	*/
+	for (int i = 0; i < count_angle - 2; i++)
+	{
+		int index = i * count_angle * 2 + 1;
+		for (int j = index; j < index + count_angle * 2; j++)
+		{
+			data.push_back(vertices[j]->x);
+			data.push_back(vertices[j]->y);
+			data.push_back(vertices[j]->z);
+
+			if (j == index + count_angle * 2 - 1)
+			{
+				data.push_back(vertices[index]->x);
+				data.push_back(vertices[index]->y);
+				data.push_back(vertices[index]->z);
+			}
+			else
+			{
+				data.push_back(vertices[j + 1]->x);
+				data.push_back(vertices[j + 1]->y);
+				data.push_back(vertices[j + 1]->z);
+			}
+
+			data.push_back(vertices[j + count_angle * 2]->x);
+			data.push_back(vertices[j + count_angle * 2]->y);
+			data.push_back(vertices[j + count_angle * 2]->z);
 
 
-	// create data for OpenGL from vertices to TRIANGLES
-	
+			data.push_back(vertices[j + count_angle * 2]->x);
+			data.push_back(vertices[j + count_angle * 2]->y);
+			data.push_back(vertices[j + count_angle * 2]->z);
+
+			if (j == index + count_angle * 2 - 1)
+			{
+				data.push_back(vertices[index]->x);
+				data.push_back(vertices[index]->y);
+				data.push_back(vertices[index]->z);
+
+				data.push_back(vertices[index + count_angle * 2]->x);
+				data.push_back(vertices[index + count_angle * 2]->y);
+				data.push_back(vertices[index + count_angle * 2]->z);
+			}
+			else
+			{
+				data.push_back(vertices[j + 1]->x);
+				data.push_back(vertices[j + 1]->y);
+				data.push_back(vertices[j + 1]->z);
+
+				data.push_back(vertices[j + count_angle * 2 + 1]->x);
+				data.push_back(vertices[j + count_angle * 2 + 1]->y);
+				data.push_back(vertices[j + count_angle * 2 + 1]->z);
+			}
+
+		}
+	}
+	int index = vertices.size() - 1;
+	for (int i = index - 1; i > index - count_angle * 2 - 1; i--)
+	{
+		data.push_back(vertices[index]->x);
+		data.push_back(vertices[index]->y);
+		data.push_back(vertices[index]->z);
+
+		data.push_back(vertices[i]->x);
+		data.push_back(vertices[i]->y);
+		data.push_back(vertices[i]->z);
+
+		if (i == index - count_angle * 2)
+		{
+			data.push_back(vertices[index - 1]->x);
+			data.push_back(vertices[index - 1]->y);
+			data.push_back(vertices[index - 1]->z);
+		}
+		else
+		{
+			data.push_back(vertices[i - 1]->x);
+			data.push_back(vertices[i - 1]->y);
+			data.push_back(vertices[i - 1]->z);
+		}
+	}
+
 	// cleaning
 	for (auto v : vertices) delete v;
 	vertices.clear();

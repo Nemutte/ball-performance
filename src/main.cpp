@@ -168,6 +168,12 @@ void Draw3d()
 		glUniformMatrix4fv(body_location, 1, GL_FALSE, glm::value_ptr(body_model));
 		ball->Draw();
 	}
+	for (hib::Cylinder* cilinder : cylinders)
+	{
+		body_model = glm::translate(glm::mat4(1.0f), cilinder->position);
+		glUniformMatrix4fv(body_location, 1, GL_FALSE, glm::value_ptr(body_model));
+		cilinder->Draw();
+	}
 }
 void MoveToBorders2d()
 {
@@ -353,13 +359,23 @@ int StartSimulation3d()
 	shader3d = hib::make_shader();
 
 	//Create Balls
-	balls.push_back(new Ball(glm::vec3(1.0, 0.0, 0.0), 2.0));
+	balls.push_back(new Ball(glm::vec3(-5.0, 0.0, 0.0), 2.0));
+
+	//Create Cylinders
+	cylinders.push_back(new hib::Cylinder(glm::vec3(-7.0, -7.0, 0.0), glm::vec3(-4.0, 0.0, 0.0), glm::vec3(1.0, 0.0, 0.0), 2.0));
 
 	// Creating model for balls
 	for (Ball* ball : balls)
 	{
 		ball->collision_body->CreateDrawableModel();
 	}
+
+	// Creating model for cylinders
+	for (hib::Cylinder* cylinder : cylinders)
+	{
+		cylinder->CreateDrawableModel();
+	}
+
 	// Setup Camera and perspective
 	Camera* camera = new Camera(glm::vec3(0.0, 2.0, 20.0));
 	projection = glm::perspective(glm::radians(45.0f), (float)screen_width / screen_height, 0.1f, 300.0f);
@@ -414,7 +430,6 @@ int StartSimulation3d()
 		{
 			float move = ((int)hib::Ball::COUNT_BALLS % 30);
 			/*
-			*/
 			Ball* b;
 			b = new Ball(glm::vec3(-9.0 + 0.5 * move, 8.f, 1.f), 1.f);
 			b->collision_body->CreateDrawableModel();
@@ -431,6 +446,7 @@ int StartSimulation3d()
 			b = new Ball(glm::vec3(-3.0 + 0.5 * move, 8.f, 1.f), 2.f);
 			b->collision_body->CreateDrawableModel();
 			balls.push_back(b);
+			*/
 			
 			time_for_spawn_ball = 0.f;
 		}

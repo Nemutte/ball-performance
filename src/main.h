@@ -33,6 +33,7 @@ bool CLOSE = false;
 
 std::vector<Circle*> circles;
 std::vector<Ball*> balls;
+std::vector<hib::Cylinder*> cylinders;
 
 bool SetupGLFW();
 unsigned int make_shader(const std::string& vertex_filepath, const std::string& fragment_filepath);
