@@ -362,7 +362,7 @@ int StartSimulation3d()
 	balls.push_back(new Ball(glm::vec3(-5.0, 0.0, 0.0), 2.0));
 
 	//Create Cylinders
-	cylinders.push_back(new hib::Cylinder(glm::vec3(-7.0, -7.0, 0.0), glm::vec3(-4.0, 0.0, 0.0), glm::vec3(1.0, 0.0, 0.0), 2.0));
+	cylinders.push_back(new hib::Cylinder(glm::vec3(-5.0, -3.0, 0.0), glm::vec3(-1.0, 0.0, 0.0), glm::vec3(1.0, 0.0, 0.0), 1.0));
 
 	// Creating model for balls
 	for (Ball* ball : balls)

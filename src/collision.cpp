@@ -311,26 +311,92 @@ std::vector<float> Cylinder::CreateDataModel()
 
 	// crating vertices of cylinder
 
-	int count_angle = (radius + 5);
+	int count_angle = (radius + 3) * 2;
 	float angle_base = M_PI / (float)count_angle;
 
 	float len = glm::length(pointB - pointA);
 
 	for (int i = 0; i <= count_angle; i++)
 	{
-		if (i > count_angle / 2) len = 0.0;
+		if (i > count_angle / 2 && len != 0.0)
+		{
+			len = 0.0;
+			glm::vec3* new_vertices1 = new glm::vec3(cos(angle_base * (i-1)) * radius + len, sin(angle_base * (i - 1)) * radius, 0.0);
+			vertices.push_back(new_vertices1);
+			if (i != count_angle && i != 0)
+			{
+				for (int j = 1; j < count_angle * 2; j++)
+				{
+					glm::vec3* new_vertices2 = new glm::vec3(new_vertices1->x, sin(angle_base * j + M_PI / 2.f) * new_vertices1->y, cos(angle_base * j + M_PI / 2.f) * new_vertices1->y);
+					vertices.push_back(new_vertices2);
+				}
+
+			}
+		}
 		glm::vec3* new_vertices1 = new glm::vec3(cos(angle_base * i) * radius + len, sin(angle_base * i) * radius, 0.0);
 		vertices.push_back(new_vertices1);
 		if (i != count_angle && i != 0)
 		{
 			for (int j = 1; j < count_angle * 2; j++)
 			{
-				glm::vec3* new_vertices2 = new glm::vec3(new_vertices1->x + len, sin(angle_base * j + M_PI / 2.f) * new_vertices1->y, cos(angle_base * j + M_PI / 2.f) * new_vertices1->y);
+				glm::vec3* new_vertices2 = new glm::vec3(new_vertices1->x, sin(angle_base * j + M_PI / 2.f) * new_vertices1->y, cos(angle_base * j + M_PI / 2.f) * new_vertices1->y);
 				vertices.push_back(new_vertices2);
 			}
-
 		}
 	}
+
+	glm::vec3 d_vec = glm::normalize(pointB - pointA);
+	float alfa = 1.0; // z
+	float beta = 0.0; // y
+	float gamma = 0.0;// x
+	glm::mat3x3 rotate_mat = glm::mat3x3(1.0);
+	// glm::mat3x3 rotate_mat_alfa = glm::mat3x3(1.0);
+	// glm::mat3x3 rotate_mat_beta = glm::mat3x3(1.0);
+	// glm::mat3x3 rotate_mat_gamma = glm::mat3x3(1.0);
+	rotate_mat[0][0] = cos(alfa) * cos(beta); rotate_mat[1][0] = -sin(alfa) * cos(gamma) + cos(alfa) * sin(beta) * sin(gamma); rotate_mat[2][0] = -sin(alfa) * sin(gamma) - cos(alfa) * sin(beta) * cos(gamma);
+	rotate_mat[0][1] = sin(alfa) * cos(beta); rotate_mat[1][1] = cos(alfa) * cos(gamma) + sin(alfa) * sin(beta) * sin(gamma);  rotate_mat[2][1] = cos(alfa) * sin(gamma) - sin(alfa) * sin(beta) * cos(gamma);
+	rotate_mat[0][2] = sin(beta);			  rotate_mat[1][2] = -cos(beta) * sin(gamma);									   rotate_mat[2][2] = cos(beta) * cos(gamma);
+
+	/*
+	// rotation z:
+	rotate_mat_alfa[0][0] = cos(alfa); rotate_mat_alfa[1][0] = -sin(alfa); rotate_mat_alfa[2][0] = 0;
+	rotate_mat_alfa[0][1] = sin(alfa); rotate_mat_alfa[1][1] = cos(alfa);	 rotate_mat_alfa[2][1] = 0;
+	rotate_mat_alfa[0][2] = 0;		  rotate_mat_alfa[1][2] = 0;			 rotate_mat_alfa[2][2] = 1;
+	// rotation y:
+	rotate_mat_beta[0][0] = cos(beta); rotate_mat_beta[1][0] = 0; rotate_mat_beta[2][0] = -sin(beta);
+	rotate_mat_beta[0][1] = 0;		   rotate_mat_beta[1][1] = 1; rotate_mat_beta[2][1] = 0;
+	rotate_mat_beta[0][2] = sin(beta); rotate_mat_beta[1][2] = 0; rotate_mat_beta[2][2] = cos(beta);
+	// rotation x:
+	rotate_mat_gamma[0][0] = 1; rotate_mat_gamma[1][0] = 0;					rotate_mat_gamma[2][0] = 0;
+	rotate_mat_gamma[0][1] = 0; rotate_mat_gamma[1][1] = cos(gamma);		rotate_mat_gamma[2][1] = sin(gamma);
+	rotate_mat_gamma[0][2] = 0; rotate_mat_gamma[1][2] = -sin(gamma);		rotate_mat_gamma[2][2] = cos(gamma);
+	*/
+	for (glm::vec3* v : vertices)
+	{
+		glm::vec3 tmp = (rotate_mat * *v);
+		v->x = tmp.x;
+		v->y = tmp.y;
+		v->z = tmp.z;
+		/*
+		glm::vec3 tmp = (rotate_mat_alfa * *v);
+		v->x = tmp.x;
+		v->y = tmp.y;
+		v->z = tmp.z;
+
+		tmp = (rotate_mat_beta * *v);
+		v->x = tmp.x;
+		v->y = tmp.y;
+		v->z = tmp.z;
+
+		tmp = (rotate_mat_gamma * *v);
+		v->x = tmp.x;
+		v->y = tmp.y;
+		v->z = tmp.z;
+		*/
+	}
+
+
+	//count_angle++;
 	/// create data for OpenGL from vertices to TRIANGLES
 	for (int i = 1; i < count_angle * 2 + 1; i++)
 	{
@@ -357,7 +423,7 @@ std::vector<float> Cylinder::CreateDataModel()
 	}
 	/*
 	*/
-	for (int i = 0; i < count_angle - 2; i++)
+	for (int i = 0; i < count_angle - 1; i++)
 	{
 		int index = i * count_angle * 2 + 1;
 		for (int j = index; j < index + count_angle * 2; j++)
