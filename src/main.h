@@ -27,7 +27,7 @@ float cameraAngle_beta = 0.f;
 glm::mat4 view;
 glm::mat4 projection;
 // 2d and 3d
-float spawn_ball_ratio = 0.3f;
+float spawn_ball_ratio = 0.5f;
 
 bool CLOSE = false;
 

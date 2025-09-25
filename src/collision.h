@@ -86,8 +86,12 @@ public:
 };
 
 bool DetectCollisionBallvsBall(Ball* b1, Ball* b2, float& distance);
+bool DetectCollisionCylindervsBall(Cylinder* c, Ball* b, float& distance, glm::vec3& collision_point);
+bool DetectCollisionCylindervsCylinder(Cylinder* c1, Cylinder* c2);
 
 void SolveCollisionBallvsBall(Ball* b1, Ball* b2);
+void SolveCollisionCylindervsBall(Cylinder* c, Ball* b);
+void SolveCollisionCylindervsBall(Cylinder* c1, Cylinder* c2);
 
 unsigned int make_shader();
 unsigned int make_module(unsigned int module_type, const char* shaderSrc);

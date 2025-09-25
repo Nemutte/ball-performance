@@ -15,6 +15,59 @@ bool DetectCollisionBallvsBall(Ball* b1, Ball* b2, float& distance)
 
 	return false;
 }
+bool DetectCollisionCylindervsBall(Cylinder* c, Ball* b, float& distance, glm::vec3& collision_point)
+{
+	glm::vec3 vec_cylinder_dir = c->pointB - c->pointA;
+	glm::vec3 vec_to_ball = b->position - (c->position + c->pointA);
+	float length_vec_cylinder_dir = glm::length(vec_cylinder_dir);
+	float distance_on_vec_dir = glm::dot(glm::normalize(vec_cylinder_dir), vec_to_ball);
+	if (distance_on_vec_dir >= length_vec_cylinder_dir)
+	{
+		collision_point = c->position + c->pointB;
+		glm::vec3 vec = b->position - collision_point;
+		distance = glm::length(vec);
+		if (distance < c->radius + b->radius)
+		{
+			return true;
+		}
+
+		return false;
+	}
+	else if (distance_on_vec_dir <= 0.0)
+	{
+		collision_point = c->position + c->pointA;
+		glm::vec3 vec = b->position - collision_point;
+		distance = glm::length(vec);
+
+		if (distance < c->radius + b->radius)
+		{
+			return true;
+		}
+
+		return false;
+	}
+	else
+	{
+		collision_point = c->position + c->pointA + glm::normalize(vec_cylinder_dir) * distance_on_vec_dir;
+		glm::vec3 vec = b->position - collision_point;
+		distance = glm::length(vec);
+
+		if (distance < c->radius + b->radius)
+		{
+			return true;
+		}
+
+		return false;
+	}
+	
+	return false;
+}
+bool DetectCollisionCylindervsCylinder(Cylinder* c1, Cylinder* c2)
+{
+
+	return false;
+}
+
 void SolveCollisionBallvsBall(Ball* b1, Ball* b2)
 {
 	glm::vec3 vec = b2->position - b1->position;
@@ -42,6 +95,39 @@ void SolveCollisionBallvsBall(Ball* b1, Ball* b2)
 			b2->position += vec * colaps_distance;
 		}
 	}
+}
+void SolveCollisionCylindervsBall(Cylinder* c, Ball* b)
+{
+	glm::vec3 collision_point;
+	float distance = 0.f;
+
+	if (DetectCollisionCylindervsBall(c, b, distance, collision_point))
+	{
+		glm::vec3 vec = b->position - collision_point;
+		vec /= distance;
+		if (distance == 0.0)
+		{
+			distance = 1.0e-8;
+			vec += 1.0e-8;
+		}
+
+		float colaps_distance = b->radius + c->radius - distance;
+
+		if (!c->fixed && !b->fixed) colaps_distance /= 2.f;
+
+		if (!c->fixed)
+		{
+			c->position -= vec * colaps_distance;
+		}
+		if (!b->fixed)
+		{
+			b->position += vec * colaps_distance;
+		}
+	}
+}
+void SolveCollisionCylindervsBall(Cylinder* c1, Cylinder* c2)
+{
+
 }
 
 Ball::Ball(float x, float y, float z, float r) :position{ x, y, z }, radius{ r }, fixed{ false }, drawable{ false }
@@ -301,7 +387,6 @@ void Cylinder::Draw()
 		glDrawArrays(GL_TRIANGLES, 0, vertex_count);
 	}
 }
-
 std::vector<float> Cylinder::CreateDataModel()
 {
 	// variable for data model
@@ -346,53 +431,21 @@ std::vector<float> Cylinder::CreateDataModel()
 	}
 
 	glm::vec3 d_vec = glm::normalize(pointB - pointA);
-	float alfa = 1.0; // z
-	float beta = 0.0; // y
+	float alfa = glm::asin(d_vec.y); // z
+	float beta = -glm::atan(-d_vec.z, d_vec.x); // y
 	float gamma = 0.0;// x
+	// rotatiom matrix
 	glm::mat3x3 rotate_mat = glm::mat3x3(1.0);
-	// glm::mat3x3 rotate_mat_alfa = glm::mat3x3(1.0);
-	// glm::mat3x3 rotate_mat_beta = glm::mat3x3(1.0);
-	// glm::mat3x3 rotate_mat_gamma = glm::mat3x3(1.0);
 	rotate_mat[0][0] = cos(alfa) * cos(beta); rotate_mat[1][0] = -sin(alfa) * cos(gamma) + cos(alfa) * sin(beta) * sin(gamma); rotate_mat[2][0] = -sin(alfa) * sin(gamma) - cos(alfa) * sin(beta) * cos(gamma);
 	rotate_mat[0][1] = sin(alfa) * cos(beta); rotate_mat[1][1] = cos(alfa) * cos(gamma) + sin(alfa) * sin(beta) * sin(gamma);  rotate_mat[2][1] = cos(alfa) * sin(gamma) - sin(alfa) * sin(beta) * cos(gamma);
 	rotate_mat[0][2] = sin(beta);			  rotate_mat[1][2] = -cos(beta) * sin(gamma);									   rotate_mat[2][2] = cos(beta) * cos(gamma);
 
-	/*
-	// rotation z:
-	rotate_mat_alfa[0][0] = cos(alfa); rotate_mat_alfa[1][0] = -sin(alfa); rotate_mat_alfa[2][0] = 0;
-	rotate_mat_alfa[0][1] = sin(alfa); rotate_mat_alfa[1][1] = cos(alfa);	 rotate_mat_alfa[2][1] = 0;
-	rotate_mat_alfa[0][2] = 0;		  rotate_mat_alfa[1][2] = 0;			 rotate_mat_alfa[2][2] = 1;
-	// rotation y:
-	rotate_mat_beta[0][0] = cos(beta); rotate_mat_beta[1][0] = 0; rotate_mat_beta[2][0] = -sin(beta);
-	rotate_mat_beta[0][1] = 0;		   rotate_mat_beta[1][1] = 1; rotate_mat_beta[2][1] = 0;
-	rotate_mat_beta[0][2] = sin(beta); rotate_mat_beta[1][2] = 0; rotate_mat_beta[2][2] = cos(beta);
-	// rotation x:
-	rotate_mat_gamma[0][0] = 1; rotate_mat_gamma[1][0] = 0;					rotate_mat_gamma[2][0] = 0;
-	rotate_mat_gamma[0][1] = 0; rotate_mat_gamma[1][1] = cos(gamma);		rotate_mat_gamma[2][1] = sin(gamma);
-	rotate_mat_gamma[0][2] = 0; rotate_mat_gamma[1][2] = -sin(gamma);		rotate_mat_gamma[2][2] = cos(gamma);
-	*/
 	for (glm::vec3* v : vertices)
 	{
 		glm::vec3 tmp = (rotate_mat * *v);
 		v->x = tmp.x;
 		v->y = tmp.y;
 		v->z = tmp.z;
-		/*
-		glm::vec3 tmp = (rotate_mat_alfa * *v);
-		v->x = tmp.x;
-		v->y = tmp.y;
-		v->z = tmp.z;
-
-		tmp = (rotate_mat_beta * *v);
-		v->x = tmp.x;
-		v->y = tmp.y;
-		v->z = tmp.z;
-
-		tmp = (rotate_mat_gamma * *v);
-		v->x = tmp.x;
-		v->y = tmp.y;
-		v->z = tmp.z;
-		*/
 	}
 
 
