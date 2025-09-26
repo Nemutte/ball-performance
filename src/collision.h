@@ -36,10 +36,10 @@ private:
 	std::vector<float> CreateDataModel();
 };
 
-class Cylinder
+class Capsule
 {
 public:
-	inline static int COUNT_CYLINDERS = 0;
+	inline static int COUNT_CapsuleS = 0;
 	glm::vec3 position;
 	glm::vec3 pointA;
 	glm::vec3 pointB;
@@ -52,12 +52,12 @@ private:
 	unsigned int VBO;
 
 public:
-	Cylinder(float px, float py, float pz, float pAx, float pAy, float pAz, float pBx, float pBy, float pBz, float r);
-	Cylinder(glm::vec3 pos, glm::vec3 pA, glm::vec3 pB, float r);
-	Cylinder(float px, float py, float pz, float pAx, float pAy, float pAz, float pBx, float pBy, float pBz, float r, bool f);
-	Cylinder(glm::vec3 pos, glm::vec3 pA, glm::vec3 pB, float r, bool f);
+	Capsule(float px, float py, float pz, float pAx, float pAy, float pAz, float pBx, float pBy, float pBz, float r);
+	Capsule(glm::vec3 pos, glm::vec3 pA, glm::vec3 pB, float r);
+	Capsule(float px, float py, float pz, float pAx, float pAy, float pAz, float pBx, float pBy, float pBz, float r, bool f);
+	Capsule(glm::vec3 pos, glm::vec3 pA, glm::vec3 pB, float r, bool f);
 
-	~Cylinder();
+	~Capsule();
 
 	void CreateDrawableModel();
 	void Draw();
@@ -86,12 +86,12 @@ public:
 };
 
 bool DetectCollisionBallvsBall(Ball* b1, Ball* b2, float& distance);
-bool DetectCollisionCylindervsBall(Cylinder* c, Ball* b, float& distance, glm::vec3& collision_point);
-bool DetectCollisionCylindervsCylinder(Cylinder* c1, Cylinder* c2);
+bool DetectCollisionCapsulevsBall(Capsule* c, Ball* b, float& distance, glm::vec3& collision_point);
+bool DetectCollisionCapsulevsCapsule(Capsule* c1, Capsule* c2);
 
 void SolveCollisionBallvsBall(Ball* b1, Ball* b2);
-void SolveCollisionCylindervsBall(Cylinder* c, Ball* b);
-void SolveCollisionCylindervsBall(Cylinder* c1, Cylinder* c2);
+void SolveCollisionCapsulevsBall(Capsule* c, Ball* b);
+void SolveCollisionCapsulevsBall(Capsule* c1, Capsule* c2);
 
 unsigned int make_shader();
 unsigned int make_module(unsigned int module_type, const char* shaderSrc);

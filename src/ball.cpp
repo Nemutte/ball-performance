@@ -38,7 +38,7 @@ void SolveCollision(Circle* a, Circle* b)
 	b->position += vecAB * collision;
 }
 
-Ball::Ball(glm::vec3 pos, float r) : position{ pos }, radius{ r }, speed{ 10.0 }
+Ball::Ball(glm::vec3 pos, float r) : position{ pos }, radius{ r }, speed{ 4.0 }
 {
 	last_position = position;
 	collision_body = new hib::Ball(pos, r);

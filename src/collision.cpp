@@ -3,6 +3,23 @@
 
 namespace hib
 {
+float min(float a, float b)
+{
+	if (a <= b)return a;
+	return b;
+}
+float max(float a, float b)
+{
+	if (a >= b)return a;
+	return b;
+}
+glm::vec3 ClosestPointOnLineSegment(glm::vec3 A, glm::vec3 B, glm::vec3 Point)
+{
+	glm::vec3 AB = B - A;
+	float t = glm::dot(Point - A, AB) / glm::dot(AB, AB);
+	return A + AB * min(max(t, 0.0), 1.0); // saturate(t) can be written as: min((max(t, 0), 1)
+}
+
 bool DetectCollisionBallvsBall(Ball* b1, Ball* b2, float& distance)
 {
 	glm::vec3 vec = b2->position - b1->position;
@@ -15,13 +32,13 @@ bool DetectCollisionBallvsBall(Ball* b1, Ball* b2, float& distance)
 
 	return false;
 }
-bool DetectCollisionCylindervsBall(Cylinder* c, Ball* b, float& distance, glm::vec3& collision_point)
+bool DetectCollisionCapsulevsBall(Capsule* c, Ball* b, float& distance, glm::vec3& collision_point)
 {
-	glm::vec3 vec_cylinder_dir = c->pointB - c->pointA;
+	glm::vec3 vec_Capsule_dir = c->pointB - c->pointA;
 	glm::vec3 vec_to_ball = b->position - (c->position + c->pointA);
-	float length_vec_cylinder_dir = glm::length(vec_cylinder_dir);
-	float distance_on_vec_dir = glm::dot(glm::normalize(vec_cylinder_dir), vec_to_ball);
-	if (distance_on_vec_dir >= length_vec_cylinder_dir)
+	float length_vec_Capsule_dir = glm::length(vec_Capsule_dir);
+	float distance_on_vec_dir = glm::dot(glm::normalize(vec_Capsule_dir), vec_to_ball);
+	if (distance_on_vec_dir >= length_vec_Capsule_dir)
 	{
 		collision_point = c->position + c->pointB;
 		glm::vec3 vec = b->position - collision_point;
@@ -48,7 +65,7 @@ bool DetectCollisionCylindervsBall(Cylinder* c, Ball* b, float& distance, glm::v
 	}
 	else
 	{
-		collision_point = c->position + c->pointA + glm::normalize(vec_cylinder_dir) * distance_on_vec_dir;
+		collision_point = c->position + c->pointA + glm::normalize(vec_Capsule_dir) * distance_on_vec_dir;
 		glm::vec3 vec = b->position - collision_point;
 		distance = glm::length(vec);
 
@@ -62,10 +79,51 @@ bool DetectCollisionCylindervsBall(Cylinder* c, Ball* b, float& distance, glm::v
 	
 	return false;
 }
-bool DetectCollisionCylindervsCylinder(Cylinder* c1, Cylinder* c2)
+bool DetectCollisionCapsulevsCapsule(Capsule* c1, Capsule* c2)
 {
+	//capsule c1
+	glm::vec3 c1_normal = glm::normalize(c1->pointB - c1->pointA);
+	glm::vec3 c1_lineEndOffset = c1_normal * c1->radius;
+	glm::vec3 c1_A = c1->pointA + c1_lineEndOffset;
+	glm::vec3 c1_B = c1->pointB - c1_lineEndOffset;
 
-	return false;
+	//capsule c2
+	glm::vec3 c2_normal = glm::normalize(c2->pointB - c2->pointA);
+	glm::vec3 c2_lineEndOffset = c2_normal * c2->radius;
+	glm::vec3 c2_A = c2->pointA + c2_lineEndOffset;
+	glm::vec3 c2_B = c2->pointB - c2_lineEndOffset;
+
+	glm::vec3 v0 = c2_A - c1_A;
+	glm::vec3 v1 = c2_B - c1_A;
+	glm::vec3 v2 = c2_A - c1_B;
+	glm::vec3 v3 = c2_B - c1_B;
+
+	float d0 = glm::dot(v0, v0);
+	float d1 = glm::dot(v1, v1);
+	float d2 = glm::dot(v2, v2);
+	float d3 = glm::dot(v3, v3);
+
+	glm::vec3 bestA;
+	if (d2 < d0 || d2 < d1 || d3 < d0 || d3 < d1)
+	{
+		bestA = c1_B;
+	}
+	else
+	{
+		bestA = c1_A;
+	}
+
+	glm::vec3 bestB = ClosestPointOnLineSegment(c2_A, c2_B, bestA);
+
+	bestA = ClosestPointOnLineSegment(c1_A, c1_B, bestB);
+
+	glm::vec3 penetration_normal = bestA - bestB;
+	float len = glm::length(penetration_normal);
+	penetration_normal /= len;  // normalize
+	float penetration_depth = c1->radius + c2->radius - len;
+	bool intersects = penetration_depth > 0;
+
+	return intersects;
 }
 
 void SolveCollisionBallvsBall(Ball* b1, Ball* b2)
@@ -96,12 +154,12 @@ void SolveCollisionBallvsBall(Ball* b1, Ball* b2)
 		}
 	}
 }
-void SolveCollisionCylindervsBall(Cylinder* c, Ball* b)
+void SolveCollisionCapsulevsBall(Capsule* c, Ball* b)
 {
 	glm::vec3 collision_point;
 	float distance = 0.f;
 
-	if (DetectCollisionCylindervsBall(c, b, distance, collision_point))
+	if (DetectCollisionCapsulevsBall(c, b, distance, collision_point))
 	{
 		glm::vec3 vec = b->position - collision_point;
 		vec /= distance;
@@ -125,7 +183,7 @@ void SolveCollisionCylindervsBall(Cylinder* c, Ball* b)
 		}
 	}
 }
-void SolveCollisionCylindervsBall(Cylinder* c1, Cylinder* c2)
+void SolveCollisionCapsulevsBall(Capsule* c1, Capsule* c2)
 {
 
 }
@@ -182,7 +240,6 @@ void Ball::Draw()
 		glDrawArrays(GL_TRIANGLES, 0, vertex_count);
 	}
 }
-
 std::vector<float> Ball::CreateDataModel()
 {
 	// variable for data model
@@ -332,38 +389,38 @@ std::vector<float> Ball::CreateDataModel()
 	return data;
 }
 
-Cylinder::Cylinder(float px, float py, float pz, float pAx, float pAy, float pAz, float pBx, float pBy, float pBz, float r)
+Capsule::Capsule(float px, float py, float pz, float pAx, float pAy, float pAz, float pBx, float pBy, float pBz, float r)
 	:position{ glm::vec3(px, py, pz) }, pointA{ glm::vec3(pAx, pAy, pAz) }, pointB{ glm::vec3(pBx, pBy, pBz) }, radius{ r }, fixed{ false }, drawable{ false }
 {
-	COUNT_CYLINDERS++;
+	COUNT_CapsuleS++;
 }
-Cylinder::Cylinder(glm::vec3 pos, glm::vec3 pA, glm::vec3 pB, float r)
+Capsule::Capsule(glm::vec3 pos, glm::vec3 pA, glm::vec3 pB, float r)
 	:position{ pos }, pointA{ pA }, pointB{ pB }, radius{ r }, fixed{ false }, drawable{ false }
 {
-	COUNT_CYLINDERS++;
+	COUNT_CapsuleS++;
 }
-Cylinder::Cylinder(float px, float py, float pz, float pAx, float pAy, float pAz, float pBx, float pBy, float pBz, float r, bool f)
+Capsule::Capsule(float px, float py, float pz, float pAx, float pAy, float pAz, float pBx, float pBy, float pBz, float r, bool f)
 	:position{ glm::vec3(px, py, pz) }, pointA{ glm::vec3(pAx, pAy, pAz) }, pointB{ glm::vec3(pBx, pBy, pBz) }, radius{ r }, fixed{ f }, drawable{ false }
 {
-	COUNT_CYLINDERS++;
+	COUNT_CapsuleS++;
 }
-Cylinder::Cylinder(glm::vec3 pos, glm::vec3 pA, glm::vec3 pB, float r, bool f)
+Capsule::Capsule(glm::vec3 pos, glm::vec3 pA, glm::vec3 pB, float r, bool f)
 	:position{ pos }, pointA{ pA }, pointB{ pB }, radius{ r }, fixed{ f }, drawable{ false }
 {
-	COUNT_CYLINDERS++;
+	COUNT_CapsuleS++;
 }
 
-Cylinder::~Cylinder()
+Capsule::~Capsule()
 {
 	if (drawable)
 	{
 		glDeleteVertexArrays(1, &VAO);
 		glDeleteBuffers(1, &VBO);
 	}
-	COUNT_CYLINDERS--;
+	COUNT_CapsuleS--;
 }
 
-void Cylinder::CreateDrawableModel()
+void Capsule::CreateDrawableModel()
 {
 	std::vector<float> data = CreateDataModel();
 	vertex_count = data.size() / 3;
@@ -379,7 +436,7 @@ void Cylinder::CreateDrawableModel()
 	drawable = true;
 
 }
-void Cylinder::Draw()
+void Capsule::Draw()
 {
 	if (drawable)
 	{
@@ -387,14 +444,14 @@ void Cylinder::Draw()
 		glDrawArrays(GL_TRIANGLES, 0, vertex_count);
 	}
 }
-std::vector<float> Cylinder::CreateDataModel()
+std::vector<float> Capsule::CreateDataModel()
 {
 	// variable for data model
 	std::vector<float> data;
 
 	std::vector<glm::vec3*> vertices;
 
-	// crating vertices of cylinder
+	// crating vertices of Capsule
 
 	int count_angle = (radius + 3) * 2;
 	float angle_base = M_PI / (float)count_angle;
@@ -432,7 +489,7 @@ std::vector<float> Cylinder::CreateDataModel()
 
 	glm::vec3 d_vec = glm::normalize(pointB - pointA);
 	float alfa = glm::asin(d_vec.y); // z
-	float beta = -glm::atan(-d_vec.z, d_vec.x); // y
+	float beta = glm::atan(-d_vec.z, d_vec.x); // y
 	float gamma = 0.0;// x
 	// rotatiom matrix
 	glm::mat3x3 rotate_mat = glm::mat3x3(1.0);
