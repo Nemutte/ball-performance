@@ -164,10 +164,9 @@ bool DetectCollisionRayvsCapsule(Ray3d* ray, Capsule* cap, glm::vec3& collision_
 	glm::vec3 A = cap->position + cap->pointA;
 	glm::vec3 B = cap->position + cap->pointB;
 	glm::vec3 C = ray->position;
-	glm::vec3 D = ray->position + ray->ray * 10.0f;
 
 	glm::vec3 u = B - A;
-	glm::vec3 v = D - C;
+	glm::vec3 v = ray->ray;
 	glm::vec3 w = A - C;
 
 	float a = glm::dot(u, u);
