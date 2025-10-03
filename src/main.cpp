@@ -174,6 +174,12 @@ void Draw3d()
 		glUniformMatrix4fv(body_location, 1, GL_FALSE, glm::value_ptr(body_model));
 		cilinder->Draw();
 	}
+	for (hib::Ray3d* ray: Rays)
+	{
+		body_model = glm::translate(glm::mat4(1.0f), ray->position);
+		glUniformMatrix4fv(body_location, 1, GL_FALSE, glm::value_ptr(body_model));
+		ray->Draw();
+	}
 }
 void MoveToBorders2d()
 {
@@ -268,10 +274,20 @@ void Collision3d()
 		{
 			if (c1 != c2)
 			{
-				if (!hib::DetectCollisionCapsulevsCapsule(c1, c2))
-				{
-					printf("capsule collision!\n");
-				}
+				hib::SolveCollisionCapsulevsCaplsule(c1, c2);
+			}
+		}
+	}
+	for (hib::Ray3d* ray : Rays)
+	{
+		for (hib::Capsule* c2 : Capsules)
+		{
+			float d;
+			glm::vec3 A;
+			glm::vec3 B;
+			if (hib::DetectCollisionRayvsCapsule(ray, c2, A, B, d))
+			{
+				printf("zdezenie w odleglosci = %f\n", d);
 			}
 		}
 	}
@@ -381,11 +397,14 @@ int StartSimulation3d()
 	//balls.push_back(new Ball(glm::vec3(-5.0, 0.0, 0.0), 1.0));
 
 	//Create Capsules
-	Capsules.push_back(new hib::Capsule(glm::vec3(-5.0, -1.0, 7.0), glm::vec3(-1.0, 0.0, -5.0), glm::vec3(1.0, 2.0, 4.0), 1.0, true));
-	Capsules.push_back(new hib::Capsule(glm::vec3(0.0, -1.0, 7.0), glm::vec3(1.0, 0.0, -5.0), glm::vec3(-1.0, 0.0, 3.0), 1.0, true));
-	Capsules.push_back(new hib::Capsule(glm::vec3(5.0, -1.0, 7.0), glm::vec3(1.0, 0.0, -5.0), glm::vec3(1.0, 4.0, -5.0), 1.0, true));
-	Capsules.push_back(new hib::Capsule(glm::vec3(5.0, 4.0, 7.0), glm::vec3(-5.0, -5.0, -5.0), glm::vec3(5.0, 5.0, -5.0), 1.0, true));
+	Capsules.push_back(new hib::Capsule(glm::vec3(0.0, 1.5, 0.0), glm::vec3(-5.0, 0.0, 0.0), glm::vec3(5.0, -4.0, 0.0), 1.0, true));
+	//Capsules.push_back(new hib::Capsule(glm::vec3(0.0, 0.5, 0.0), glm::vec3(-5.0, 0.0, 0.0), glm::vec3(5.0, -4.0, 0.0), 1.0, false));
+	//Capsules.push_back(new hib::Capsule(glm::vec3(-5.0, -1.0, 7.0), glm::vec3(0.0, 0.0, 0.0), glm::vec3(5.0, 0.0, 0.0), 1.0, true));
+	//Capsules.push_back(new hib::Capsule(glm::vec3(5.0, 4.0, 7.0), glm::vec3(-5.0, -5.0, -5.0), glm::vec3(5.0, 5.0, -5.0), 1.0, true));
 	//Capsules.push_back(new hib::Capsule(glm::vec3(-5.0, 5.0, 9.0), glm::vec3(5.0, 5.0, -5.0), glm::vec3(-5.0, -5.0, -5.0), 1.0, true));
+
+	//Create Rays
+	Rays.push_back(new hib::Ray3d(0.0, -3.0, 0.0, 1.0, 0.0, 0.0));
 
 	// Creating model for balls
 	for (Ball* ball : balls)
@@ -397,6 +416,12 @@ int StartSimulation3d()
 	for (hib::Capsule* Capsule : Capsules)
 	{
 		Capsule->CreateDrawableModel();
+	}
+
+	// Creating model for Rays
+	for (hib::Ray3d* ray : Rays)
+	{
+		ray->CreateDrawableModel();
 	}
 
 	// Setup Camera and perspective
@@ -472,14 +497,14 @@ int StartSimulation3d()
 			*/
 		
 			Ball* b;
-			float radius = 0.5f;
+			float radius = 0.2f;
 			if(hib::Ball::COUNT_BALLS <= 900)
 			{
 				for (int i = 0; i < 10; i++)
 				{
 					for (int j = 0; j < 10; j++)
 					{
-						b = new Ball(glm::vec3(-9.0 + (j * radius * 2.f) + 0.5 * move, 8.f, 1.f + radius * i * 1.2f), radius);
+						b = new Ball(glm::vec3(-9.0 + (j * radius * 2.f) + 0.5f * move, 8.f, -2.5f + 1.f + radius * i * 1.2f), radius);
 						b->collision_body->CreateDrawableModel();
 						balls.push_back(b);
 					}

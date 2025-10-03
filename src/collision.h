@@ -69,8 +69,23 @@ private:
 class Ray3d
 {
 public:
-	glm::vec3 point;
+	glm::vec3 position;
 	glm::vec3 ray;
+	bool drawable;
+
+private:
+	unsigned int VAO, vertex_count;
+	unsigned int VBO;
+
+public:
+	Ray3d(glm::vec3 pos, glm::vec3 ray);
+	Ray3d(glm::vec3 pos, glm::vec3 p1, glm::vec3 p2);
+	Ray3d(float px, float py, float pz, float rx, float ry, float rz);
+
+	~Ray3d();
+
+	void CreateDrawableModel();
+	void Draw();
 };
 
 class Polygon3d
@@ -87,11 +102,13 @@ public:
 
 bool DetectCollisionBallvsBall(Ball* b1, Ball* b2, float& distance);
 bool DetectCollisionCapsulevsBall(Capsule* c, Ball* b, float& distance, glm::vec3& collision_point);
-bool DetectCollisionCapsulevsCapsule(Capsule* c1, Capsule* c2);
+bool DetectCollisionCapsulevsCapsule(Capsule* c1, Capsule* c2, glm::vec3& collision_pointA, glm::vec3& collision_pointB, float& distance);
+bool DetectCollisionRayvsBall(Ray3d* ray, Ball* ball, float& distance_from_source_of_ray);
+bool DetectCollisionRayvsCapsule(Ray3d* ray, Capsule* cap, glm::vec3& collision_pointA, glm::vec3& collision_pointB, float& distance_from_source_of_ray);
 
 void SolveCollisionBallvsBall(Ball* b1, Ball* b2);
 void SolveCollisionCapsulevsBall(Capsule* c, Ball* b);
-void SolveCollisionCapsulevsBall(Capsule* c1, Capsule* c2);
+void SolveCollisionCapsulevsCaplsule(Capsule* c1, Capsule* c2);
 
 unsigned int make_shader();
 unsigned int make_module(unsigned int module_type, const char* shaderSrc);

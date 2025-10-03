@@ -79,51 +79,128 @@ bool DetectCollisionCapsulevsBall(Capsule* c, Ball* b, float& distance, glm::vec
 	
 	return false;
 }
-bool DetectCollisionCapsulevsCapsule(Capsule* c1, Capsule* c2)
+bool DetectCollisionCapsulevsCapsule(Capsule* c1, Capsule* c2, glm::vec3& collision_pointA, glm::vec3& collision_pointB, float& colaps_distance)
 {
-	//capsule c1
-	glm::vec3 c1_normal = glm::normalize(c1->pointB - c1->pointA);
-	glm::vec3 c1_lineEndOffset = c1_normal * c1->radius;
-	glm::vec3 c1_A = c1->pointA + c1_lineEndOffset;
-	glm::vec3 c1_B = c1->pointB - c1_lineEndOffset;
+	glm::vec3 A = c1->position + c1->pointA;
+	glm::vec3 B = c1->position + c1->pointB;
+	glm::vec3 C = c2->position + c2->pointA;
+	glm::vec3 D = c2->position + c2->pointB;
 
-	//capsule c2
-	glm::vec3 c2_normal = glm::normalize(c2->pointB - c2->pointA);
-	glm::vec3 c2_lineEndOffset = c2_normal * c2->radius;
-	glm::vec3 c2_A = c2->pointA + c2_lineEndOffset;
-	glm::vec3 c2_B = c2->pointB - c2_lineEndOffset;
+	glm::vec3 u = B - A;
+	glm::vec3 v = D - C;
+	glm::vec3 w = A - C;
 
-	glm::vec3 v0 = c2_A - c1_A;
-	glm::vec3 v1 = c2_B - c1_A;
-	glm::vec3 v2 = c2_A - c1_B;
-	glm::vec3 v3 = c2_B - c1_B;
+	float a = glm::dot(u, u);
+	float b = glm::dot(u, v);
+	float c = glm::dot(v, v);
+	float d = glm::dot(u, w);
+	float e = glm::dot(v, w);
+	float Dn = a * c - b * b;
 
-	float d0 = glm::dot(v0, v0);
-	float d1 = glm::dot(v1, v1);
-	float d2 = glm::dot(v2, v2);
-	float d3 = glm::dot(v3, v3);
+	float s, t;
 
-	glm::vec3 bestA;
-	if (d2 < d0 || d2 < d1 || d3 < d0 || d3 < d1)
+	if (Dn < 1e-9f)
 	{
-		bestA = c1_B;
+		s = 0.0f;
+		t = (b > c ? d / b : e / c);
 	}
 	else
 	{
-		bestA = c1_A;
+		s = (b * e - c * d) / Dn;
+		t = (a * e - b * d) / Dn;
 	}
 
-	glm::vec3 bestB = ClosestPointOnLineSegment(c2_A, c2_B, bestA);
+	s = glm::clamp(s, 0.0f, 1.0f);
+	t = glm::clamp(t, 0.0f, 1.0f);
+	
+	collision_pointA = A + u * s;
+	collision_pointB = C + v * t;
+	float distance = glm::length(collision_pointA - collision_pointB);
+	colaps_distance = c1->radius + c2->radius - distance;
 
-	bestA = ClosestPointOnLineSegment(c1_A, c1_B, bestB);
+	return distance <= (c1->radius+c2->radius);
+}
+bool DetectCollisionRayvsBall(Ray3d* ray, Ball* ball, float& distance_from_source_of_ray)
+{
+	glm::vec3 vec_Capsule_dir = ray->ray;
+	glm::vec3 vec_to_ball = ball->position - ray->position;
+	float distance_on_vec_dir = glm::dot(vec_Capsule_dir, vec_to_ball);
+	glm::vec3 collision_point;
 
-	glm::vec3 penetration_normal = bestA - bestB;
-	float len = glm::length(penetration_normal);
-	penetration_normal /= len;  // normalize
-	float penetration_depth = c1->radius + c2->radius - len;
-	bool intersects = penetration_depth > 0;
+	distance_from_source_of_ray = 0;
 
-	return intersects;
+	if (distance_on_vec_dir <= 0.0)
+	{
+		collision_point = ray->position;
+		glm::vec3 vec = ball->position - collision_point;
+		float distance = glm::length(vec);
+
+		if (distance < ball->radius)
+		{
+			distance_from_source_of_ray = glm::dot(vec_Capsule_dir, collision_point - ray->position);
+			return true;
+		}
+
+		return false;
+	}
+	else
+	{
+		collision_point = ray->position + vec_Capsule_dir * distance_on_vec_dir;
+		glm::vec3 vec = ball->position - collision_point;
+		float distance = glm::length(vec);
+
+		if (distance < ball->radius)
+		{
+			distance_from_source_of_ray = glm::dot(vec_Capsule_dir, collision_point - ray->position);
+			return true;
+		}
+
+		return false;
+	}
+	return false;
+}
+bool DetectCollisionRayvsCapsule(Ray3d* ray, Capsule* cap, glm::vec3& collision_pointA, glm::vec3& collision_pointB, float& distance_from_source_of_ray)
+{
+	glm::vec3 A = cap->position + cap->pointA;
+	glm::vec3 B = cap->position + cap->pointB;
+	glm::vec3 C = ray->position;
+	glm::vec3 D = ray->position + ray->ray * 10.0f;
+
+	glm::vec3 u = B - A;
+	glm::vec3 v = D - C;
+	glm::vec3 w = A - C;
+
+	float a = glm::dot(u, u);
+	float b = glm::dot(u, v);
+	float c = glm::dot(v, v);
+	float d = glm::dot(u, w);
+	float e = glm::dot(v, w);
+	float Dn = a * c - b * b;
+
+	float s, t;
+
+	if (Dn < 1e-9f)
+	{
+		s = 0.0f;
+		t = (b > c ? d / b : e / c);
+	}
+	else
+	{
+		s = (b * e - c * d) / Dn;
+		t = (a * e - b * d) / Dn;
+	}
+
+	s = glm::clamp(s, 0.0f, 1.0f);
+
+	collision_pointA = A + u * s;
+	collision_pointB = C + v * t;
+	float distance = glm::length(collision_pointA - collision_pointB);
+
+	distance_from_source_of_ray = glm::dot(collision_pointA - ray->position, ray->ray);
+	printf("collision_pointA x = %f, y = %f, z = %f\n", collision_pointA.x, collision_pointA.y, collision_pointA.z);
+	printf("collision_pointB x = %f, y = %f, z = %f\n", collision_pointB.x, collision_pointB.y, collision_pointB.z);
+	printf("s = %f, t = %f, distance = %f\n", s, t, distance);
+	return distance <= cap->radius;
 }
 
 void SolveCollisionBallvsBall(Ball* b1, Ball* b2)
@@ -183,9 +260,31 @@ void SolveCollisionCapsulevsBall(Capsule* c, Ball* b)
 		}
 	}
 }
-void SolveCollisionCapsulevsBall(Capsule* c1, Capsule* c2)
+void SolveCollisionCapsulevsCaplsule(Capsule* c1, Capsule* c2)
 {
+	float colaps_distance;
+	glm::vec3 cA;
+	glm::vec3 cB;
 
+	if (DetectCollisionCapsulevsCapsule(c1, c2, cA, cB, colaps_distance))
+	{
+		glm::vec3 vec = glm::normalize(cB - cA);
+		if (colaps_distance == 0.0)
+		{
+			colaps_distance = 1.0e-8;
+			vec += 1.0e-8;
+		}
+		if (!c1->fixed && !c2->fixed) colaps_distance /= 2.f;
+
+		if (!c1->fixed)
+		{
+			c1->position -= vec * colaps_distance;
+		}
+		if (!c2->fixed)
+		{
+			c2->position += vec * colaps_distance;
+		}
+	}
 }
 
 Ball::Ball(float x, float y, float z, float r) :position{ x, y, z }, radius{ r }, fixed{ false }, drawable{ false }
@@ -488,8 +587,9 @@ std::vector<float> Capsule::CreateDataModel()
 	}
 
 	glm::vec3 d_vec = glm::normalize(pointB - pointA);
-	float alfa = glm::asin(d_vec.y); // z
-	float beta = glm::atan(-d_vec.z, d_vec.x); // y
+	float alfa = glm::atan(d_vec.y, d_vec.x); // z
+	float beta = glm::acos(sqrt(d_vec.x * d_vec.x + d_vec.y * d_vec.y)); // y
+	if (d_vec.z < 0.0) beta *= -1;
 	float gamma = 0.0;// x
 	// rotatiom matrix
 	glm::mat3x3 rotate_mat = glm::mat3x3(1.0);
@@ -619,6 +719,57 @@ std::vector<float> Capsule::CreateDataModel()
 	return data;
 }
 
+Ray3d::Ray3d(glm::vec3 pos, glm::vec3 ray) : position{ pos }
+{
+	this->ray = glm::normalize(ray);
+}
+Ray3d::Ray3d(glm::vec3 pos, glm::vec3 p1, glm::vec3 p2) : position{ pos }
+{
+	ray = glm::normalize(p2 - p1);
+}
+Ray3d::Ray3d(float px, float py, float pz, float rx, float ry, float rz) : position{ glm::vec3(px, py, pz) }, ray{ glm::vec3(rx, ry, rz) }
+{
+	this->ray = glm::normalize(this->ray);
+}
+
+Ray3d::~Ray3d()
+{
+	if (drawable)
+	{
+		glDeleteVertexArrays(1, &VAO);
+		glDeleteBuffers(1, &VBO);
+	}
+}
+
+void Ray3d::CreateDrawableModel()
+{
+	std::vector<float> data;
+	data.push_back(0.0);
+	data.push_back(0.0);
+	data.push_back(0.0);
+	data.push_back(ray.x * 10.0);
+	data.push_back(ray.y * 10.0);
+	data.push_back(ray.z * 10.0);
+	vertex_count = 2;
+
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), data.data(), GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12, (void*)0);
+	glEnableVertexAttribArray(0);
+	drawable = true;
+}
+void Ray3d::Draw()
+{
+	if (drawable)
+	{
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_LINES, 0, vertex_count);
+	}
+}
 unsigned int make_shader()
 {
 	std::vector<unsigned int> modules;
