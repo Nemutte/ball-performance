@@ -34,50 +34,21 @@ bool DetectCollisionBallvsBall(Ball* b1, Ball* b2, float& distance)
 }
 bool DetectCollisionCapsulevsBall(Capsule* c, Ball* b, float& distance, glm::vec3& collision_point)
 {
-	glm::vec3 vec_Capsule_dir = c->pointB - c->pointA;
-	glm::vec3 vec_to_ball = b->position - (c->position + c->pointA);
-	float length_vec_Capsule_dir = glm::length(vec_Capsule_dir);
-	float distance_on_vec_dir = glm::dot(glm::normalize(vec_Capsule_dir), vec_to_ball);
-	if (distance_on_vec_dir >= length_vec_Capsule_dir)
+
+	glm::vec3 v = c->pointB - c->pointA;
+	glm::vec3 A = c->position + c->pointA;
+	glm::vec3 B = b->position - A;
+	// f(x) = A + s * v;
+	float v_length = glm::length(v);
+	if (v_length == 0.0)
 	{
-		collision_point = c->position + c->pointB;
-		glm::vec3 vec = b->position - collision_point;
-		distance = glm::length(vec);
-		if (distance < c->radius + b->radius)
-		{
-			return true;
-		}
 
-		return false;
 	}
-	else if (distance_on_vec_dir <= 0.0)
-	{
-		collision_point = c->position + c->pointA;
-		glm::vec3 vec = b->position - collision_point;
-		distance = glm::length(vec);
-
-		if (distance < c->radius + b->radius)
-		{
-			return true;
-		}
-
-		return false;
-	}
-	else
-	{
-		collision_point = c->position + c->pointA + glm::normalize(vec_Capsule_dir) * distance_on_vec_dir;
-		glm::vec3 vec = b->position - collision_point;
-		distance = glm::length(vec);
-
-		if (distance < c->radius + b->radius)
-		{
-			return true;
-		}
-
-		return false;
-	}
-	
-	return false;
+	float dist = glm::dot(glm::normalize(v), B);
+	float s = glm::clamp(dist / v_length, 0.0f, 1.0f);
+	collision_point = A + s * v;
+	distance = glm::length(collision_point - b->position);
+	return distance <= b->radius + c->radius;
 }
 bool DetectCollisionCapsulevsCapsule(Capsule* c1, Capsule* c2, glm::vec3& collision_pointA, glm::vec3& collision_pointB, float& colaps_distance)
 {
@@ -95,19 +66,24 @@ bool DetectCollisionCapsulevsCapsule(Capsule* c1, Capsule* c2, glm::vec3& collis
 	float c = glm::dot(v, v);
 	float d = glm::dot(u, w);
 	float e = glm::dot(v, w);
-	float Dn = a * c - b * b;
+	float sDn = a * c - b * b;
+	float tDn = sDn;
 
 	float s, t;
 
-	if (Dn < 1e-9f)
+	if (sDn < 1e-9f)
 	{
 		s = 0.0f;
 		t = (b > c ? d / b : e / c);
 	}
 	else
 	{
-		s = (b * e - c * d) / Dn;
-		t = (a * e - b * d) / Dn;
+		s = (b * e - c * d);
+		t = (a * e - b * d);
+		if (sDn < 0.0) { sDn = 0.0; tDn = e; tDn = c; }
+		else if (s > sDn) { s = sDn; t = e + b; tDn = c; }
+		s = s / sDn;
+		t = t / tDn;
 	}
 
 	s = glm::clamp(s, 0.0f, 1.0f);
@@ -174,19 +150,24 @@ bool DetectCollisionRayvsCapsule(Ray3d* ray, Capsule* cap, glm::vec3& collision_
 	float c = glm::dot(v, v);
 	float d = glm::dot(u, w);
 	float e = glm::dot(v, w);
-	float Dn = a * c - b * b;
+	float sDn = a * c - b * b;
+	float tDn = sDn;
 
 	float s, t;
 
-	if (Dn < 1e-9f)
+	if (sDn < 1e-9f)
 	{
 		s = 0.0f;
-		t = (b > c ? d / b : e / c);
+		t = e / c;
 	}
 	else
 	{
-		s = (b * e - c * d) / Dn;
-		t = (a * e - b * d) / Dn;
+		s = (b * e - c * d);
+		t = (a * e - b * d);
+		if (sDn < 0.0) { sDn = 0.0; tDn = e; tDn = c; }
+		else if (s > sDn) { s = sDn; t = e + b; tDn = c; }
+		s = s / sDn;
+		t = t / tDn;
 	}
 
 	s = glm::clamp(s, 0.0f, 1.0f);
@@ -196,9 +177,10 @@ bool DetectCollisionRayvsCapsule(Ray3d* ray, Capsule* cap, glm::vec3& collision_
 	float distance = glm::length(collision_pointA - collision_pointB);
 
 	distance_from_source_of_ray = glm::dot(collision_pointA - ray->position, ray->ray);
-	printf("collision_pointA x = %f, y = %f, z = %f\n", collision_pointA.x, collision_pointA.y, collision_pointA.z);
-	printf("collision_pointB x = %f, y = %f, z = %f\n", collision_pointB.x, collision_pointB.y, collision_pointB.z);
-	printf("s = %f, t = %f, distance = %f\n", s, t, distance);
+	// printf("----------------------------------------\n");
+	// printf("collision_pointA x = %f, y = %f, z = %f\n", collision_pointA.x, collision_pointA.y, collision_pointA.z);
+	// printf("collision_pointB x = %f, y = %f, z = %f\n", collision_pointB.x, collision_pointB.y, collision_pointB.z);
+	// printf("s = %f, t = %f, distance = %f\n", s, t, distance);
 	return distance <= cap->radius;
 }
 

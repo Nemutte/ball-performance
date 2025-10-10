@@ -287,6 +287,19 @@ void Collision3d()
 			glm::vec3 B;
 			if (hib::DetectCollisionRayvsCapsule(ray, c2, A, B, d))
 			{
+				//printf("zdezenie w odleglosci = %f\n", d);
+			}
+		}
+	}
+	for (hib::Ray3d* ray : Rays)
+	{
+		for (Ball* b2 : balls)
+		{
+			float d;
+			glm::vec3 A;
+			glm::vec3 B;
+			if (hib::DetectCollisionRayvsBall(ray, b2->collision_body, d))
+			{
 				printf("zdezenie w odleglosci = %f\n", d);
 			}
 		}
@@ -404,7 +417,7 @@ int StartSimulation3d()
 	//Capsules.push_back(new hib::Capsule(glm::vec3(-5.0, 5.0, 9.0), glm::vec3(5.0, 5.0, -5.0), glm::vec3(-5.0, -5.0, -5.0), 1.0, true));
 
 	//Create Rays
-	Rays.push_back(new hib::Ray3d(0.0, -3.0, 0.0, 1.0, 0.0, 0.0));
+	Rays.push_back(new hib::Ray3d(0.0, 5.0, 0.0, 1.0, 0.0, 0.0));
 
 	// Creating model for balls
 	for (Ball* ball : balls)
