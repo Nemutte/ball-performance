@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
+#include <string>
 
 #define M_PI  3.14159265
 
@@ -91,13 +91,38 @@ public:
 class Polygon3d
 {
 public:
+	std::vector<glm::vec3*> points;
+	glm::vec3* normal;
 
+	Polygon3d(std::vector<glm::vec3*> p, glm::vec3* normal);
+	~Polygon3d();
 };
 
 class PolygonFigure3d
 {
 public:
+	std::vector<Polygon3d*> poligons;
+	std::vector<glm::vec3*> vertices;
+	bool drawable;
 
+private:
+	unsigned int VAO, vertex_count;
+	unsigned int VBO;
+
+public:
+	PolygonFigure3d(const char* filename);
+	~PolygonFigure3d();
+
+	void LoadModelData(const char* filename,
+		std::vector<double>& vertices,
+		std::vector<double>& normals,
+		std::vector<int>& faces_v,
+		std::vector<int>& faces_vn,
+		int& v_count,
+		int& vn_count,
+		int& f_count);
+	void CreateDrawableModel();
+	void Draw();
 };
 
 bool DetectCollisionBallvsBall(Ball* b1, Ball* b2, float& distance);
@@ -112,6 +137,7 @@ void SolveCollisionCapsulevsCaplsule(Capsule* c1, Capsule* c2);
 
 unsigned int make_shader();
 unsigned int make_module(unsigned int module_type, const char* shaderSrc);
+std::vector<std::string> split(std::string line, std::string delimiter);
 }
 
 
