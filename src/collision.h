@@ -104,6 +104,7 @@ public:
 	std::vector<Polygon3d*> poligons;
 	std::vector<glm::vec3*> vertices;
 	bool drawable;
+	glm::vec3 position;
 
 private:
 	unsigned int VAO, vertex_count;
@@ -111,16 +112,10 @@ private:
 
 public:
 	PolygonFigure3d(const char* filename);
+	PolygonFigure3d(const char* filename, float x, float y, float z);
 	~PolygonFigure3d();
 
-	void LoadModelData(const char* filename,
-		std::vector<double>& vertices,
-		std::vector<double>& normals,
-		std::vector<int>& faces_v,
-		std::vector<int>& faces_vn,
-		int& v_count,
-		int& vn_count,
-		int& f_count);
+	void LoadModelData(const char* filename);
 	void CreateDrawableModel();
 	void Draw();
 };

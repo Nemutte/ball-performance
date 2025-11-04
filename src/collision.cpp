@@ -773,19 +773,26 @@ namespace hib
 		delete normal;
 	}
 
-	PolygonFigure3d::PolygonFigure3d(const char* filename)
+	PolygonFigure3d::PolygonFigure3d(const char* filename) : drawable{ false }
 	{
-
+		position = glm::vec3(0.f, 0.f, 0.f);
+		LoadModelData(filename);
 	}
-	void PolygonFigure3d::LoadModelData(const char* filename,
-		std::vector<double>& vertices,
-		std::vector<double>& normals,
-		std::vector<int>& faces_v,
-		std::vector<int>& faces_vn, 
-		int& v_count,
-		int& vn_count,
-		int& f_count)
+	PolygonFigure3d::PolygonFigure3d(const char* filename, float x, float y, float z) : drawable{ false }
 	{
+		position = glm::vec3(x, y, z);
+
+		std::vector<glm::vec3*> normals;
+		std::vector<int> faces_v;
+		std::vector<int> faces_vn;
+		int v_count;
+		int vn_count;
+		LoadModelData(filename);
+	}
+	void PolygonFigure3d::LoadModelData(const char* filename)
+	{
+		std::vector<glm::vec3*> normals;
+
 		std::string line;
 		std::vector<std::string> words;
 		std::ifstream file;
@@ -797,51 +804,95 @@ namespace hib
 			words = split(line, " ");
 			if (!words[0].compare("v"))
 			{
-				vertices.push_back(std::stod(words[1]));
-				vertices.push_back(std::stod(words[2]));
-				vertices.push_back(std::stod(words[3]));
-				v_count++;
+				glm::vec3* ver = new glm::vec3(std::stof(words[1]), std::stof(words[2]), std::stof(words[3]));
+				vertices.push_back(ver);
 			}
 			else if (!words[0].compare("vn"))
 			{
-				normals.push_back(std::stod(words[1]));
-				normals.push_back(std::stod(words[2]));
-				normals.push_back(std::stod(words[3]));
-				vn_count++;
+				glm::vec3* norm = new glm::vec3(std::stof(words[1]), std::stof(words[2]), std::stof(words[3]));
+				normals.push_back(norm);
 			} 
 			else if (!words[0].compare("f"))
 			{
-				std::vector<std::string>triangles;
-				for (int i = 2; i < words.size() - 1; i++)
+				Polygon3d* pol;
+				std::vector<int> faces;
+				std::vector<glm::vec3*> vertices_of_face;
+				int normal;
+				for (int i = 1; i < words.size(); i++) // f 1/3 3/3 2/3 5/3
 				{
-					triangles.push_back(words[1]);
-					triangles.push_back(words[i]);
-					triangles.push_back(words[i + 1]);
-				}
-				for (int i = 0; i < triangles.size(); i++)
-				{
-					std::vector<std::string>face = split(triangles[i], "/");
+					std::vector<std::string>face = split(words[i], "/");
 					int count = 0;
 					for (std::string f : face)
 					{
 						if (count == 0 && f.compare(""))
-							faces_v.push_back(std::stoi(f) - 1);
+							faces.push_back(std::stoi(f) - 1);
 						else if (count == 1 && f.compare(""))
-							faces_vn.push_back(std::stoi(f) - 1);
+							normal = std::stoi(f) - 1;
 						count++;
 					}
-					f_count++;
 				}
+				for (int i : faces)
+				{
+					vertices_of_face.push_back(vertices[i]);
+				}
+				pol = new Polygon3d(vertices_of_face, normals[normal]);
+				poligons.push_back(pol);
 			}
 		}
 		file.close();
 	}
 	PolygonFigure3d::~PolygonFigure3d()
 	{
+		for (Polygon3d* pol : poligons)
+		{
+			delete pol;
+		}
+		poligons.clear();
 		if (drawable)
 		{
 			glDeleteVertexArrays(1, &VAO);
 			glDeleteBuffers(1, &VBO);
+		}
+	}
+	void PolygonFigure3d::CreateDrawableModel()
+	{
+		vertex_count = 0;
+		std::vector<float> data;
+		int count = 0;
+		for (int i = 0; i < poligons.size(); i++)
+		{
+			std::vector<glm::vec3*> triengles;
+			for (int j = 1; j < poligons[i]->points.size() - 1; j++)
+			{
+				triengles.push_back(poligons[i]->points[0]);
+				triengles.push_back(poligons[i]->points[j]);
+				triengles.push_back(poligons[i]->points[j+1]);
+			}
+			for(int j = 0; j < triengles.size(); j++)
+			{
+				data.push_back(triengles[j]->x);
+				data.push_back(triengles[j]->y);
+				data.push_back(triengles[j]->z);
+			}
+			vertex_count += triengles.size();
+		}
+
+		glGenVertexArrays(1, &VAO);
+		glBindVertexArray(VAO);
+
+		glGenBuffers(1, &VBO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), data.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12, (void*)0);
+		glEnableVertexAttribArray(0);
+		drawable = true;
+	}
+	void PolygonFigure3d::Draw()
+	{
+		if (drawable)
+		{
+			glBindVertexArray(VAO);
+			glDrawArrays(GL_TRIANGLES, 0, vertex_count);
 		}
 	}
 

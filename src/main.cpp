@@ -180,6 +180,12 @@ void Draw3d()
 		glUniformMatrix4fv(body_location, 1, GL_FALSE, glm::value_ptr(body_model));
 		ray->Draw();
 	}
+	for (hib::PolygonFigure3d* figure: Figures)
+	{
+		body_model = glm::translate(glm::mat4(1.0f), figure->position);
+		glUniformMatrix4fv(body_location, 1, GL_FALSE, glm::value_ptr(body_model));
+		figure->Draw();
+	}
 }
 void MoveToBorders2d()
 {
@@ -419,6 +425,10 @@ int StartSimulation3d()
 	//Create Rays
 	Rays.push_back(new hib::Ray3d(0.0, 5.0, 0.0, 1.0, 0.0, 0.0));
 
+	// Creating Figures
+	Figures.push_back(new hib::PolygonFigure3d("../hitboxes/box.txt", 2.0, 2.0, 0.0));
+
+
 	// Creating model for balls
 	for (Ball* ball : balls)
 	{
@@ -435,6 +445,12 @@ int StartSimulation3d()
 	for (hib::Ray3d* ray : Rays)
 	{
 		ray->CreateDrawableModel();
+	}
+
+	// Creating model for Figures
+	for (hib::PolygonFigure3d* figure : Figures)
+	{
+		figure->CreateDrawableModel();
 	}
 
 	// Setup Camera and perspective
