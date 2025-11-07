@@ -876,7 +876,6 @@ namespace hib
 			}
 			vertex_count += triengles.size();
 		}
-
 		glGenVertexArrays(1, &VAO);
 		glBindVertexArray(VAO);
 

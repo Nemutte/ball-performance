@@ -306,7 +306,7 @@ void Collision3d()
 			glm::vec3 B;
 			if (hib::DetectCollisionRayvsBall(ray, b2->collision_body, d))
 			{
-				printf("zdezenie w odleglosci = %f\n", d);
+				//printf("zdezenie w odleglosci = %f\n", d);
 			}
 		}
 	}
@@ -426,7 +426,10 @@ int StartSimulation3d()
 	Rays.push_back(new hib::Ray3d(0.0, 5.0, 0.0, 1.0, 0.0, 0.0));
 
 	// Creating Figures
-	Figures.push_back(new hib::PolygonFigure3d("../hitboxes/box.txt", 2.0, 2.0, 0.0));
+	Figures.push_back(new hib::PolygonFigure3d("../hitboxes/box.obj", 2.0, 2.0, 0.0));
+	Figures.push_back(new hib::PolygonFigure3d("../hitboxes/octahedron.obj", -2.0, 3.0, 0.0));
+	Figures.push_back(new hib::PolygonFigure3d("../hitboxes/tetrahendron.obj", -4.0, 3.0, 0.0));
+	Figures.push_back(new hib::PolygonFigure3d("../hitboxes/dodecahedron.obj", -4.0, 3.0, 3.0));
 
 
 	// Creating model for balls
