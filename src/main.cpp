@@ -426,11 +426,18 @@ int StartSimulation3d()
 	Rays.push_back(new hib::Ray3d(0.0, 5.0, 0.0, 1.0, 0.0, 0.0));
 
 	// Creating Figures
-	Figures.push_back(new hib::PolygonFigure3d("../hitboxes/box.obj", 2.0, 2.0, 0.0));
-	Figures.push_back(new hib::PolygonFigure3d("../hitboxes/octahedron.obj", -2.0, 3.0, 0.0));
-	Figures.push_back(new hib::PolygonFigure3d("../hitboxes/tetrahendron.obj", -4.0, 3.0, 0.0));
-	Figures.push_back(new hib::PolygonFigure3d("../hitboxes/dodecahedron.obj", -4.0, 3.0, 3.0));
+	Figures.push_back(new hib::PolygonFigure3d("../hitboxes/box.obj", 0.5, 2.0, 0.0, false));
+	Figures.push_back(new hib::PolygonFigure3d("../hitboxes/octahedron.obj", -0.3, 4.0, 0.0, false));
+	Figures.push_back(new hib::PolygonFigure3d("../hitboxes/tetrahendron.obj", -4.0, 3.0, 0.0, false));
+	Figures.push_back(new hib::PolygonFigure3d("../hitboxes/dodecahedron.obj", -4.0, 3.0, 3.0, false));
 
+	//float dis;
+	//glm::vec3 solv;
+	//bool coll = DetectCollisionFigure3dvsFigure3d(Figures[0], Figures[1], dis, solv, false);
+	//if(coll) printf("PRAWDA: dis = %f, solv {%f, %f, %f}", dis , solv.x, solv.y, solv.z);
+	//else printf("FALSZ: dis = %f, solv {%f, %f, %f}", dis , solv.x, solv.y, solv.z);
+
+	SolveCollisionFigure3dvsFigure3d(Figures[0], Figures[1], false);
 
 	// Creating model for balls
 	for (Ball* ball : balls)

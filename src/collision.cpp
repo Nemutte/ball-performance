@@ -185,6 +185,114 @@ namespace hib
 		// printf("s = %f, t = %f, distance = %f\n", s, t, distance);
 		return distance <= cap->radius;
 	}
+	bool DetectCollisionPolygonvsFigure3d(Polygon3d* polygon,glm::vec3 pol_position, PolygonFigure3d* figure, float& colaps_distance, bool wall_mod)
+	{
+		colaps_distance = 0.f;
+		float dis1 = 0.f;
+		float dis2 = 0.f;
+		for (glm::vec3* vertice : figure->vertices)
+		{
+			float dis = glm::dot(*polygon->normal, (*vertice + figure->position) - (pol_position + *polygon->points[0]));
+			printf("v: dis = %f norm {%f, %f, %f}\n", dis, polygon->normal->x, polygon->normal->y, polygon->normal->z);
+			if (dis1 > dis && dis < 0.f)
+			{
+				dis1 = dis;
+			}
+		}
+		if (wall_mod)
+		{
+			glm::vec3 not_normal = *polygon->normal;
+			not_normal *= -1;
+			for (glm::vec3* vertice : figure->vertices)
+			{
+				float dis = glm::dot(not_normal, (*vertice + figure->position) - (pol_position + *polygon->points[0]));
+				if (dis2 < dis && dis2 < 0.f)
+					dis2 = dis;
+			}
+		}
+		if (wall_mod) 
+		{
+			if (dis1 > dis2)
+				colaps_distance = dis1;
+			else
+			{
+				colaps_distance = dis2;
+				colaps_distance *= -1;
+			}
+
+			if (colaps_distance != 0.f)
+				return true;
+		}
+		else
+		{
+			colaps_distance = dis1;
+		}
+		if (colaps_distance < 0.f)
+			return true;
+		return false;
+	}
+	void IsColFigA3dvsFigB3d(PolygonFigure3d* f1, PolygonFigure3d* f2, glm::vec3& solving_normal_vector, float& shortest_distance, bool& no_collision)
+	{
+		for (Polygon3d* p : f1->poligons)
+		{
+			float distance;
+			bool collision = DetectCollisionPolygonvsFigure3d(p, f1->position, f2, distance, false);
+			if (collision)
+			{
+				if (abs(distance) < abs(shortest_distance))
+				{
+					printf("f: dis = %f\n", distance);
+					solving_normal_vector = *(p->normal);
+					shortest_distance = distance;
+				}
+			}
+			else
+			{
+				no_collision = true;
+			}
+		}
+	}
+	bool DetectCollisionFigure3dvsFigure3d(PolygonFigure3d* figure1, PolygonFigure3d* figure2, float& colaps_distance, glm::vec3& solving_collision_vector, bool figure1_as_terrain)
+	{
+		if (figure1_as_terrain && !figure2->fixed)
+		{
+			glm::vec3 solving_normal_vector;
+			for (Polygon3d* p : figure1->poligons)
+			{
+				float distance;
+				bool collision = DetectCollisionPolygonvsFigure3d(p, figure1->position, figure2, distance, true);
+				if (collision)
+				{
+
+				}
+			}
+		}
+		else if (!figure1->fixed || !figure2->fixed)
+		{
+			glm::vec3 solving_normal_vector = {0.0, 0.0, 0.0};
+			float shortest_distance = 4294967295.f;
+			bool no_collision = false;
+			IsColFigA3dvsFigB3d(figure1, figure2, solving_normal_vector, shortest_distance, no_collision);
+			if (no_collision)
+			{
+				colaps_distance = 0.f;
+				return false;
+			}
+			float tmp_sh_dist = shortest_distance;
+			IsColFigA3dvsFigB3d(figure2, figure1, solving_normal_vector, shortest_distance, no_collision);
+			if (no_collision)
+			{
+				colaps_distance = 0.f;
+				return false;
+			}
+			if (tmp_sh_dist != shortest_distance) shortest_distance *= -1;
+
+			colaps_distance = shortest_distance;
+			solving_collision_vector = solving_normal_vector * colaps_distance;
+			return true;
+		}
+		return false;
+	}
 
 	void SolveCollisionBallvsBall(Ball* b1, Ball* b2)
 	{
@@ -267,6 +375,24 @@ namespace hib
 			{
 				c2->position += vec * colaps_distance;
 			}
+		}
+	}
+	void SolveCollisionFigure3dvsFigure3d(PolygonFigure3d* f1, PolygonFigure3d* f2, bool figure1_as_terrain)
+	{
+		float dis;
+		glm::vec3 solv;
+		bool coll = DetectCollisionFigure3dvsFigure3d(f1, f2, dis, solv, figure1_as_terrain);
+		if (coll)
+		{
+			if (!f1->fixed && !f2->fixed) solv /= 2.f;
+			if (f1->fixed)f2->position -= solv;
+			if (f2->fixed)f1->position += solv;
+			else
+			{
+				f1->position += solv;
+				f2->position -= solv;
+			}
+			printf("PRAWDA: dis = %f, solv {%f, %f, %f}", dis, solv.x, solv.y, solv.z);
 		}
 	}
 
@@ -773,12 +899,12 @@ namespace hib
 		delete normal;
 	}
 
-	PolygonFigure3d::PolygonFigure3d(const char* filename) : drawable{ false }
+	PolygonFigure3d::PolygonFigure3d(const char* filename) : drawable{ false }, fixed{ false }
 	{
 		position = glm::vec3(0.f, 0.f, 0.f);
 		LoadModelData(filename);
 	}
-	PolygonFigure3d::PolygonFigure3d(const char* filename, float x, float y, float z) : drawable{ false }
+	PolygonFigure3d::PolygonFigure3d(const char* filename, float x, float y, float z, bool fixed) : drawable{ false }, fixed{ fixed }
 	{
 		position = glm::vec3(x, y, z);
 
