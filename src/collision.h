@@ -126,8 +126,8 @@ bool DetectCollisionCapsulevsBall(Capsule* c, Ball* b, float& distance, glm::vec
 bool DetectCollisionCapsulevsCapsule(Capsule* c1, Capsule* c2, glm::vec3& collision_pointA, glm::vec3& collision_pointB, float& colaps_distance);
 bool DetectCollisionRayvsBall(Ray3d* ray, Ball* ball, float& distance_from_source_of_ray);
 bool DetectCollisionRayvsCapsule(Ray3d* ray, Capsule* cap, glm::vec3& collision_pointA, glm::vec3& collision_pointB, float& distance_from_source_of_ray);
-bool DetectCollisionPolygonvsFigure3d(Polygon3d* polygon, glm::vec3 pol_position, PolygonFigure3d* figure, float& colaps_distance, bool wall_mod);
-bool DetectCollisionFigure3dvsFigure3d(PolygonFigure3d* figure1, PolygonFigure3d* figure2, float& colaps_distance, glm::vec3& solving_collision_vector, bool figure1_as_terrain);
+bool DetectCollisionPolygonvsFigure3d(Polygon3d* polygon, glm::vec3 pol_position, PolygonFigure3d* figure, float& colaps_distance);
+bool DetectCollisionFigure3dvsFigure3d(PolygonFigure3d* figure1, PolygonFigure3d* figure2, float& colaps_distance, glm::vec3& solving_collision_vector);
 
 void SolveCollisionBallvsBall(Ball* b1, Ball* b2);
 void SolveCollisionCapsulevsBall(Capsule* c, Ball* b);

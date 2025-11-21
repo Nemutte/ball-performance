@@ -199,39 +199,13 @@ namespace hib
 				dis1 = dis;
 			}
 		}
-		if (wall_mod)
-		{
-			glm::vec3 not_normal = *polygon->normal;
-			not_normal *= -1;
-			for (glm::vec3* vertice : figure->vertices)
-			{
-				float dis = glm::dot(not_normal, (*vertice + figure->position) - (pol_position + *polygon->points[0]));
-				if (dis2 < dis && dis2 < 0.f)
-					dis2 = dis;
-			}
-		}
-		if (wall_mod) 
-		{
-			if (dis1 > dis2)
-				colaps_distance = dis1;
-			else
-			{
-				colaps_distance = dis2;
-				colaps_distance *= -1;
-			}
+		colaps_distance = dis1;
 
-			if (colaps_distance != 0.f)
-				return true;
-		}
-		else
-		{
-			colaps_distance = dis1;
-		}
 		if (colaps_distance < 0.f)
 			return true;
 		return false;
 	}
-	void IsColFigA3dvsFigB3d(PolygonFigure3d* f1, PolygonFigure3d* f2, glm::vec3& solving_normal_vector, float& shortest_distance, bool& no_collision)
+	void IsColFig3dvsFigB3d(PolygonFigure3d* f1, PolygonFigure3d* f2, glm::vec3& solving_normal_vector, float& shortest_distance)
 	{
 		for (Polygon3d* p : f1->poligons)
 		{
@@ -252,34 +226,21 @@ namespace hib
 			}
 		}
 	}
-	bool DetectCollisionFigure3dvsFigure3d(PolygonFigure3d* figure1, PolygonFigure3d* figure2, float& colaps_distance, glm::vec3& solving_collision_vector, bool figure1_as_terrain)
+	bool DetectCollisionFigure3dvsFigure3d(PolygonFigure3d* figure1, PolygonFigure3d* figure2, float& colaps_distance, glm::vec3& solving_collision_vector)
 	{
-		if (figure1_as_terrain && !figure2->fixed)
-		{
-			glm::vec3 solving_normal_vector;
-			for (Polygon3d* p : figure1->poligons)
-			{
-				float distance;
-				bool collision = DetectCollisionPolygonvsFigure3d(p, figure1->position, figure2, distance, true);
-				if (collision)
-				{
-
-				}
-			}
-		}
-		else if (!figure1->fixed || !figure2->fixed)
+		if (!figure1->fixed || !figure2->fixed)
 		{
 			glm::vec3 solving_normal_vector = {0.0, 0.0, 0.0};
 			float shortest_distance = 4294967295.f;
 			bool no_collision = false;
-			IsColFigA3dvsFigB3d(figure1, figure2, solving_normal_vector, shortest_distance, no_collision);
+			IsColFig3dvsFigB3d(figure1, figure2, solving_normal_vector, shortest_distance);
 			if (no_collision)
 			{
 				colaps_distance = 0.f;
 				return false;
 			}
 			float tmp_sh_dist = shortest_distance;
-			IsColFigA3dvsFigB3d(figure2, figure1, solving_normal_vector, shortest_distance, no_collision);
+			IsColFig3dvsFigB3d(figure2, figure1, solving_normal_vector, shortest_distance);
 			if (no_collision)
 			{
 				colaps_distance = 0.f;
