@@ -39,7 +39,7 @@ private:
 class Capsule
 {
 public:
-	inline static int COUNT_CapsuleS = 0;
+	inline static int COUNT_CAPSULES = 0;
 	glm::vec3 position;
 	glm::vec3 pointA;
 	glm::vec3 pointB;
@@ -96,11 +96,15 @@ public:
 
 	Polygon3d(std::vector<glm::vec3*> p, glm::vec3* normal);
 	~Polygon3d();
+
+	void PrintData();
 };
 
 class PolygonFigure3d
 {
 public:
+	inline static int COUNT_FIGURES = 0;
+
 	std::vector<Polygon3d*> poligons;
 	std::vector<glm::vec3*> vertices;
 	bool drawable;
@@ -112,6 +116,7 @@ private:
 	unsigned int VBO;
 
 public:
+	PolygonFigure3d();
 	PolygonFigure3d(const char* filename);
 	PolygonFigure3d(const char* filename, float x, float y, float z, bool fixed);
 	~PolygonFigure3d();
@@ -128,11 +133,13 @@ bool DetectCollisionRayvsBall(Ray3d* ray, Ball* ball, float& distance_from_sourc
 bool DetectCollisionRayvsCapsule(Ray3d* ray, Capsule* cap, glm::vec3& collision_pointA, glm::vec3& collision_pointB, float& distance_from_source_of_ray);
 bool DetectCollisionPolygonvsFigure3d(Polygon3d* polygon, glm::vec3 pol_position, PolygonFigure3d* figure, float& colaps_distance);
 bool DetectCollisionFigure3dvsFigure3d(PolygonFigure3d* figure1, PolygonFigure3d* figure2, float& colaps_distance, glm::vec3& solving_collision_vector);
+bool DetectCollisionWallvsFigure3d(Polygon3d* wall, glm::vec3 pol_position, PolygonFigure3d* figure, float& colaps_distance);
 
 void SolveCollisionBallvsBall(Ball* b1, Ball* b2);
 void SolveCollisionCapsulevsBall(Capsule* c, Ball* b);
 void SolveCollisionCapsulevsCaplsule(Capsule* c1, Capsule* c2);
-void SolveCollisionFigure3dvsFigure3d(PolygonFigure3d* f1, PolygonFigure3d* f2, bool figure1_as_terrain);
+void SolveCollisionFigure3dvsFigure3d(PolygonFigure3d* f1, PolygonFigure3d* f2);
+void SolveCollisionTerrain3dvsFigure3d(PolygonFigure3d* terrain, PolygonFigure3d* figure);
 
 unsigned int make_shader();
 unsigned int make_module(unsigned int module_type, const char* shaderSrc);

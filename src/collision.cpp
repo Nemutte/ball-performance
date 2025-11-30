@@ -15,11 +15,98 @@ namespace hib
 		if (a >= b)return a;
 		return b;
 	}
+	void notVec3(glm::vec3* v)
+	{
+		v->x *= -1;
+		v->y *= -1;
+		v->z *= -1;
+	}
+	double norm2(const glm::vec3& v) { return glm::dot(v, v); }
+	PolygonFigure3d* TakePolygonAsFigure3d(PolygonFigure3d* figure, Polygon3d* polygon)
+	{
+		PolygonFigure3d* new_figure = new PolygonFigure3d();
+		glm::vec3 new_pos = figure->position + *polygon->points[0];
+		new_figure->position = new_pos;
+		std::vector<glm::vec3*> points;
+		for (glm::vec3* p : polygon->points)
+		{
+			glm::vec3* new_point = new glm::vec3(p->x - new_pos.x, p->y - new_pos.y, p->z - new_pos.z);
+			new_figure->vertices.push_back(new_point);
+			points.push_back(new_point);
+		}
+		Polygon3d* copy_polygon = new Polygon3d(points, new glm::vec3(polygon->normal->x, polygon->normal->y, polygon->normal->z ));
+		Polygon3d* turn_back_polygon = new Polygon3d(points, new glm::vec3(polygon->normal->x * -1, polygon->normal->y * -1, polygon->normal->z * -1));
+		new_figure->poligons.push_back(copy_polygon);
+		new_figure->poligons.push_back(turn_back_polygon);
+		new_figure->fixed = figure->fixed;
+		return new_figure;
+	}
 	glm::vec3 ClosestPointOnLineSegment(glm::vec3 A, glm::vec3 B, glm::vec3 Point)
 	{
 		glm::vec3 AB = B - A;
 		float t = glm::dot(Point - A, AB) / glm::dot(AB, AB);
-		return A + AB * min(max(t, 0.0), 1.0); // saturate(t) can be written as: min((max(t, 0), 1)
+		return A + AB * min(max(t, 0.0), 1.0);
+	}
+	glm::vec3 projectPointOntoPlane(const glm::vec3& P, const glm::vec3& v0, const glm::vec3& n_unit) {
+		float d = glm::dot(P - v0, n_unit);
+		return P - n_unit * d;
+	}
+	bool pointInPolygonOnPlane(const glm::vec3& P, const Polygon3d& poly) {
+		// wybierz wspó³rzêdne do projekcji:
+		glm::vec3 n = *poly.normal;
+		double ax = fabs(n.x), ay = fabs(n.y), az = fabs(n.z);
+		int drop; // 0 -> drop x (u¿yj y,z), 1 -> drop y (u¿yj x,z), 2 -> drop z (u¿yj x,y)
+		if (ax > ay && ax > az) drop = 0;
+		else if (ay > az) drop = 1;
+		else drop = 2;
+
+		auto to2d = [&](const glm::vec3& v)->std::pair<double, double> {
+			if (drop == 0) return { v.y, v.z };
+			if (drop == 1) return { v.x, v.z };
+			return { v.x, v.y };
+			};
+
+		auto p2 = to2d(P);
+		int wn = 0;
+		size_t nverts = poly.points.size();
+		for (size_t i = 0; i < nverts; i++) {
+			auto a2 = to2d(*poly.points[i]);
+			auto b2 = to2d(*poly.points[(i + 1) % nverts]);
+			// ray crossing (standard)
+			if ((a2.second <= p2.second && b2.second > p2.second) || (a2.second > p2.second && b2.second <= p2.second)) {
+				double t = (p2.second - a2.second) / (b2.second - a2.second);
+				double xint = a2.first + t * (b2.first - a2.first);
+				if (xint > p2.first) wn++;
+			}
+		}
+		return (wn % 2) == 1;
+	}
+	void IsColFig3dvsFigB3d(PolygonFigure3d* f1, PolygonFigure3d* f2, glm::vec3& solving_normal_vector, float& shortest_distance, bool& no_collision)
+	{
+		no_collision = false;
+		shortest_distance = 1.f;
+		for (Polygon3d* p : f1->poligons)
+		{
+			float colaps_distance;
+			float direction = glm::dot(*p->normal, f2->position - f1->position);
+			if(direction>=0.0)
+			{
+				bool collision = DetectCollisionPolygonvsFigure3d(p, f1->position, f2, colaps_distance);
+				if (collision)
+				{
+					if (colaps_distance > shortest_distance || shortest_distance > 0.f)
+					{
+						solving_normal_vector = *(p->normal);
+						shortest_distance = colaps_distance;
+					}
+				}
+				else
+				{
+					no_collision = true;
+					return;
+				}
+			}
+		}
 	}
 
 	bool DetectCollisionBallvsBall(Ball* b1, Ball* b2, float& distance)
@@ -32,6 +119,57 @@ namespace hib
 			return true;
 		}
 
+		return false;
+	}
+	bool DetectCollisionBallvsFigure3(const Ball& sphere, const PolygonFigure3d& mesh) {
+		// Przekszta³camy œrodek sfery do lokalnych wspó³rzêdnych siatki (jeœli mesh.position != 0)
+		glm::vec3 C = sphere.position - mesh.position;
+		float r = sphere.radius;
+
+		// 1) Wczesne odrzucenie: jeœli istnieje p³aszczyzna (face) dla której signed distance > r, to brak kolizji
+		for (const auto& face : mesh.poligons) {
+			if (face->points.empty()) continue;
+			glm::vec3 n_unit = glm::normalize(*face->normal);
+			float d_signed = glm::dot(C - *face->points[0], n_unit); // dodatnie jeœli po zewnêtrznej stronie
+			if (d_signed > r) {
+				// istnieje p³aszczyzna oddzielaj¹ca
+				return false;
+			}
+		}
+
+		// 2) SprawdŸ czy rzut œrodka na któr¹kolwiek p³aszczyznê le¿y wewn¹trz poligonu i |d| <= r
+		for (const auto& face : mesh.poligons) {
+			if (face->points.empty()) continue;
+			glm::vec3 n_unit = glm::normalize(*face->normal);
+			float d_signed = glm::dot(C - *face->points[0], n_unit);
+			float ad = fabs(d_signed);
+			if (ad <= r) {
+				glm::vec3 P = C - n_unit * d_signed; // projekcja œrodka na p³aszczyznê
+				if (pointInPolygonOnPlane(P, *face)) {
+					return true;
+				}
+			}
+		}
+
+		// 3) Test krawêdzi (dla ka¿dej krawêdzi ka¿dego poligonu)
+		for (const auto& face : mesh.poligons) {
+			size_t nv = face->points.size();
+			for (size_t i = 0; i < nv; ++i) {
+				const glm::vec3& A = *face->points[i];
+				const glm::vec3& B = *face->points[(i + 1) % nv];
+				glm::vec3 Q = ClosestPointOnLineSegment(A, B, C);
+				if (norm2(C - Q) <= r * r) return true;
+			}
+		}
+
+		// 4) Test wierzcho³ków
+		for (const auto& face : mesh.poligons) {
+			for (const auto& V : face->points) {
+				if (norm2(C - *V) <= r * r) return true;
+			}
+		}
+
+		// Jeœli nic nie wykryto -> brak kolizji
 		return false;
 	}
 	bool DetectCollisionCapsulevsBall(Capsule* c, Ball* b, float& distance, glm::vec3& collision_point)
@@ -185,15 +323,72 @@ namespace hib
 		// printf("s = %f, t = %f, distance = %f\n", s, t, distance);
 		return distance <= cap->radius;
 	}
-	bool DetectCollisionPolygonvsFigure3d(Polygon3d* polygon,glm::vec3 pol_position, PolygonFigure3d* figure, float& colaps_distance, bool wall_mod)
+	bool DetectCollisionPolygonvsFigure3d(Polygon3d* polygon,glm::vec3 pol_position, PolygonFigure3d* figure, float& colaps_distance)
+	{
+		colaps_distance = 0.f;
+		float dis = 1.f;
+		for (glm::vec3* vertice : figure->vertices)
+		{
+			float dis_tmp = glm::dot(*polygon->normal, (*vertice + figure->position) - (pol_position + *polygon->points[0]));
+			if (dis_tmp < 0.f)
+			{
+				if (dis < dis_tmp || dis >= 0.f)
+				{
+
+					dis = dis_tmp;
+				}
+			}
+		}
+		colaps_distance = dis;
+
+		if (colaps_distance < 0.f)
+		{
+			return true;
+		}
+		return false;
+	}
+	bool DetectCollisionFigure3dvsFigure3d(PolygonFigure3d* figure1, PolygonFigure3d* figure2, float& colaps_distance, glm::vec3& solving_collision_vector)
+	{
+		if (figure1->fixed && figure2->fixed) return false;
+
+		glm::vec3 solving_normal_vector1 = {0.0, 0.0, 0.0};
+		glm::vec3 solving_normal_vector2 = {0.0, 0.0, 0.0};
+		float shortest_distance1 = 1.f;
+		float shortest_distance2 = 1.f;
+		bool no_collision;
+		IsColFig3dvsFigB3d(figure1, figure2, solving_normal_vector1, shortest_distance1, no_collision);
+		if (no_collision)
+		{
+			colaps_distance = 0.f;
+			return false;
+		}
+		IsColFig3dvsFigB3d(figure2, figure1, solving_normal_vector2, shortest_distance2, no_collision);
+		if (no_collision)
+		{	
+			colaps_distance = 0.f;
+			return false;
+		}
+		if (shortest_distance1 > shortest_distance2) //chose those whiche is closer to zero
+		{
+			colaps_distance = shortest_distance1;
+			solving_collision_vector = solving_normal_vector1 * colaps_distance;
+		}
+		else
+		{
+			colaps_distance = shortest_distance2;
+			solving_collision_vector = solving_normal_vector2 * (colaps_distance * -1.f);
+		}
+		return true;
+	}
+	bool DetectCollisionWallvsFigure3d(Polygon3d* wall, glm::vec3 pol_position, PolygonFigure3d* figure, float& colaps_distance)
 	{
 		colaps_distance = 0.f;
 		float dis1 = 0.f;
 		float dis2 = 0.f;
+
 		for (glm::vec3* vertice : figure->vertices)
 		{
-			float dis = glm::dot(*polygon->normal, (*vertice + figure->position) - (pol_position + *polygon->points[0]));
-			printf("v: dis = %f norm {%f, %f, %f}\n", dis, polygon->normal->x, polygon->normal->y, polygon->normal->z);
+			float dis = glm::dot(*wall->normal, (*vertice + figure->position) - (pol_position + *wall->points[0]));
 			if (dis1 > dis && dis < 0.f)
 			{
 				dis1 = dis;
@@ -203,55 +398,6 @@ namespace hib
 
 		if (colaps_distance < 0.f)
 			return true;
-		return false;
-	}
-	void IsColFig3dvsFigB3d(PolygonFigure3d* f1, PolygonFigure3d* f2, glm::vec3& solving_normal_vector, float& shortest_distance)
-	{
-		for (Polygon3d* p : f1->poligons)
-		{
-			float distance;
-			bool collision = DetectCollisionPolygonvsFigure3d(p, f1->position, f2, distance, false);
-			if (collision)
-			{
-				if (abs(distance) < abs(shortest_distance))
-				{
-					printf("f: dis = %f\n", distance);
-					solving_normal_vector = *(p->normal);
-					shortest_distance = distance;
-				}
-			}
-			else
-			{
-				no_collision = true;
-			}
-		}
-	}
-	bool DetectCollisionFigure3dvsFigure3d(PolygonFigure3d* figure1, PolygonFigure3d* figure2, float& colaps_distance, glm::vec3& solving_collision_vector)
-	{
-		if (!figure1->fixed || !figure2->fixed)
-		{
-			glm::vec3 solving_normal_vector = {0.0, 0.0, 0.0};
-			float shortest_distance = 4294967295.f;
-			bool no_collision = false;
-			IsColFig3dvsFigB3d(figure1, figure2, solving_normal_vector, shortest_distance);
-			if (no_collision)
-			{
-				colaps_distance = 0.f;
-				return false;
-			}
-			float tmp_sh_dist = shortest_distance;
-			IsColFig3dvsFigB3d(figure2, figure1, solving_normal_vector, shortest_distance);
-			if (no_collision)
-			{
-				colaps_distance = 0.f;
-				return false;
-			}
-			if (tmp_sh_dist != shortest_distance) shortest_distance *= -1;
-
-			colaps_distance = shortest_distance;
-			solving_collision_vector = solving_normal_vector * colaps_distance;
-			return true;
-		}
 		return false;
 	}
 
@@ -338,22 +484,33 @@ namespace hib
 			}
 		}
 	}
-	void SolveCollisionFigure3dvsFigure3d(PolygonFigure3d* f1, PolygonFigure3d* f2, bool figure1_as_terrain)
+	void SolveCollisionFigure3dvsFigure3d(PolygonFigure3d* f1, PolygonFigure3d* f2)
 	{
+		if (f1->fixed && f2->fixed) return;
 		float dis;
 		glm::vec3 solv;
-		bool coll = DetectCollisionFigure3dvsFigure3d(f1, f2, dis, solv, figure1_as_terrain);
+		bool coll = DetectCollisionFigure3dvsFigure3d(f1, f2, dis, solv);
 		if (coll)
 		{
+			//printf("dis = %f\n", dis);
 			if (!f1->fixed && !f2->fixed) solv /= 2.f;
-			if (f1->fixed)f2->position -= solv;
-			if (f2->fixed)f1->position += solv;
+			if (f1->fixed) f2->position -= solv;
+			else if (f2->fixed)f1->position += solv;
 			else
 			{
 				f1->position += solv;
 				f2->position -= solv;
 			}
-			printf("PRAWDA: dis = %f, solv {%f, %f, %f}", dis, solv.x, solv.y, solv.z);
+		}
+	}
+	void SolveCollisionTerrain3dvsFigure3d(PolygonFigure3d* terrain, PolygonFigure3d* figure)
+	{
+		if (figure->fixed) return;
+		for (Polygon3d* wall : terrain->poligons)
+		{
+			PolygonFigure3d* polygon_as_wall = TakePolygonAsFigure3d(terrain, wall);
+			SolveCollisionFigure3dvsFigure3d(polygon_as_wall, figure);
+			delete polygon_as_wall;
 		}
 	}
 
@@ -561,22 +718,22 @@ namespace hib
 	Capsule::Capsule(float px, float py, float pz, float pAx, float pAy, float pAz, float pBx, float pBy, float pBz, float r)
 		:position{ glm::vec3(px, py, pz) }, pointA{ glm::vec3(pAx, pAy, pAz) }, pointB{ glm::vec3(pBx, pBy, pBz) }, radius{ r }, fixed{ false }, drawable{ false }
 	{
-		COUNT_CapsuleS++;
+		COUNT_CAPSULES++;
 	}
 	Capsule::Capsule(glm::vec3 pos, glm::vec3 pA, glm::vec3 pB, float r)
 		:position{ pos }, pointA{ pA }, pointB{ pB }, radius{ r }, fixed{ false }, drawable{ false }
 	{
-		COUNT_CapsuleS++;
+		COUNT_CAPSULES++;
 	}
 	Capsule::Capsule(float px, float py, float pz, float pAx, float pAy, float pAz, float pBx, float pBy, float pBz, float r, bool f)
 		:position{ glm::vec3(px, py, pz) }, pointA{ glm::vec3(pAx, pAy, pAz) }, pointB{ glm::vec3(pBx, pBy, pBz) }, radius{ r }, fixed{ f }, drawable{ false }
 	{
-		COUNT_CapsuleS++;
+		COUNT_CAPSULES++;
 	}
 	Capsule::Capsule(glm::vec3 pos, glm::vec3 pA, glm::vec3 pB, float r, bool f)
 		:position{ pos }, pointA{ pA }, pointB{ pB }, radius{ r }, fixed{ f }, drawable{ false }
 	{
-		COUNT_CapsuleS++;
+		COUNT_CAPSULES++;
 	}
 
 	Capsule::~Capsule()
@@ -586,7 +743,7 @@ namespace hib
 			glDeleteVertexArrays(1, &VAO);
 			glDeleteBuffers(1, &VBO);
 		}
-		COUNT_CapsuleS--;
+		COUNT_CAPSULES--;
 	}
 
 	void Capsule::CreateDrawableModel()
@@ -851,22 +1008,31 @@ namespace hib
 	}
 	Polygon3d::~Polygon3d()
 	{
-		for (glm::vec3* t : points)
-		{
-			delete t;
-		}
 		points.clear();
 
 		delete normal;
 	}
+	void Polygon3d::PrintData()
+	{
+		for (glm::vec3* p : points)
+			printf("v:  %f, %f, %f\n", p->x, p->y, p->z);
+		printf("vn: %f, %f, %f\n", normal->x, normal->y, normal->z);
+	}
 
+	PolygonFigure3d::PolygonFigure3d() : drawable{ false }
+	{
+		COUNT_FIGURES++;
+		position = glm::vec3(0.f, 0.f, 0.f);
+	}
 	PolygonFigure3d::PolygonFigure3d(const char* filename) : drawable{ false }, fixed{ false }
 	{
+		COUNT_FIGURES++;
 		position = glm::vec3(0.f, 0.f, 0.f);
 		LoadModelData(filename);
 	}
 	PolygonFigure3d::PolygonFigure3d(const char* filename, float x, float y, float z, bool fixed) : drawable{ false }, fixed{ fixed }
 	{
+		COUNT_FIGURES++;
 		position = glm::vec3(x, y, z);
 
 		std::vector<glm::vec3*> normals;
@@ -930,9 +1096,14 @@ namespace hib
 	}
 	PolygonFigure3d::~PolygonFigure3d()
 	{
+		COUNT_FIGURES--;
 		for (Polygon3d* pol : poligons)
 		{
 			delete pol;
+		}
+		for (glm::vec3* v : vertices)
+		{
+			delete v;
 		}
 		poligons.clear();
 		if (drawable)
@@ -997,7 +1168,7 @@ namespace hib
 			"{"
 			"pos = (model * vec4(vertexPos, 1.0)).xyz;"
 			"vector_to_pos = vertexPos;"
-			"light_pos = vec3(0.0, 0.0, 0.0);"
+			"light_pos = vec3(0.0,0.0,0.0);"
 			"gl_Position = projection * view * model * vec4(vertexPos, 1.0);"
 			"}";// gl_Position = vec4(1.0, 0.0, 0.0, 1.0);}";	gl_Position = projection * view * model * vec4(vertexPos, 1.0); }";
 		const char* shaderFrag = "#version 330 core\n"
@@ -1008,12 +1179,12 @@ namespace hib
 			"void main()"
 			"{"
 			"vec3 normal = vector_to_pos;"
-			"float max_d = 50.0;"
+			"float max_d = 8.0;"
 			"vec3 light_dir = normalize(light_pos - pos);"
 			"float distance = length(light_pos - pos);"
 			"float diff = max(dot(normalize(normal), light_dir), 0.0);"
 			"float attenuation = clamp(1.0 - (distance / max_d), 0.0, 1.0);"
-			"float light_intensity = diff * attenuation;"
+			"float light_intensity = attenuation;" // * diff
 			"vec4 color = vec4(1.0, 1.0, 1.0, 1.0);"
 			"color.xyz *= light_intensity;"
 			"screenColor = color;"

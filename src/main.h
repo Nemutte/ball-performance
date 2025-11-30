@@ -35,7 +35,8 @@ std::vector<Circle*> circles;
 std::vector<Ball*> balls;
 std::vector<hib::Capsule*> Capsules;
 std::vector<hib::Ray3d*> Rays;
-std::vector<hib::PolygonFigure3d*> Figures;
+std::vector<Figure3d*> Figures;
+hib::PolygonFigure3d* Terrain;
 
 bool SetupGLFW();
 unsigned int make_shader(const std::string& vertex_filepath, const std::string& fragment_filepath);

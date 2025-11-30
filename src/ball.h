@@ -37,3 +37,16 @@ public:
 	void Draw();
 	void Update(float dt);
 };
+
+class Figure3d
+{
+public:
+	glm::vec3 position;
+	glm::vec3 last_position;
+	float speed;
+	hib::PolygonFigure3d* collision_body;
+	Figure3d(const char* filename, float x, float y, float z, bool fixed);
+	~Figure3d();
+	void Draw();
+	void Update(float dt);
+};

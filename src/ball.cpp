@@ -8,6 +8,7 @@ Circle::Circle(glm::vec2 pos, Model* model) : position{ pos }, last_position{ po
 Circle::~Circle()
 {
 }
+
 void Circle::Update(float dt)
 {
 	glm::vec2 tmp_pos = last_position;
@@ -58,4 +59,28 @@ void Ball::Update(float dt)
 	glm::vec3 move_vector = glm::normalize(position - tmp_pos + glm::vec3(0.0, -0.05, 0.0));
 	position += move_vector * speed * dt;
 	collision_body->position = position;
+}
+
+Figure3d::Figure3d(const char* filename, float x, float y, float z, bool fixed)
+{
+	position = glm::vec3(x, y, z);
+	last_position = position;
+	speed = 4.f;
+	collision_body = new hib::PolygonFigure3d(filename, x, y, z, fixed);
+}
+Figure3d::~Figure3d()
+{
+	delete collision_body;
+}
+void Figure3d::Update(float dt)
+{
+	glm::vec3 tmp_pos = last_position;
+	last_position = position;
+	glm::vec3 move_vector = glm::normalize(position - tmp_pos + glm::vec3(0.0, -0.05, 0.0));
+	position += move_vector * speed * dt;
+	collision_body->position = position;
+}
+void Figure3d::Draw()
+{
+	collision_body->Draw();
 }

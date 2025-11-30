@@ -180,12 +180,15 @@ void Draw3d()
 		glUniformMatrix4fv(body_location, 1, GL_FALSE, glm::value_ptr(body_model));
 		ray->Draw();
 	}
-	for (hib::PolygonFigure3d* figure: Figures)
+	for (Figure3d* figure: Figures)
 	{
 		body_model = glm::translate(glm::mat4(1.0f), figure->position);
 		glUniformMatrix4fv(body_location, 1, GL_FALSE, glm::value_ptr(body_model));
 		figure->Draw();
 	}
+	body_model = glm::translate(glm::mat4(1.0f), Terrain->position);
+	glUniformMatrix4fv(body_location, 1, GL_FALSE, glm::value_ptr(body_model));
+	Terrain->Draw();
 }
 void MoveToBorders2d()
 {
@@ -219,6 +222,22 @@ void MoveToBorders3d()
 			ball->position.z = deep3d - 1.0f;
 		ball->collision_body->position = ball->position;
 	}
+	for (Figure3d* figure : Figures)
+	{
+		if (figure->position.x < -width3d + 1.0f)
+			figure->position.x = -width3d + 1.0f;
+		if (figure->position.x > width3d - 1.0f)
+			figure->position.x = width3d - 1.0f;
+		if (figure->position.y < -height3d + 1.0f)
+			figure->position.y = height3d + 1.0f;
+		if (figure->position.y > height3d - 1.0f)
+			figure->position.y = height3d - 1.0f;
+		if (figure->position.z < -deep3d + 1.0f)
+			figure->position.z = -deep3d + 1.0f;
+		if (figure->position.z > deep3d - 1.0f)
+			figure->position.z = deep3d - 1.0f;
+		figure->collision_body->position = figure->position;
+	}
 }
 void Update2d(float dt)
 {
@@ -234,6 +253,10 @@ void Update3d(float dt)
 	for (Ball* ball : balls)
 	{
 		ball->Update(dt);
+	}
+	for (Figure3d* f : Figures)
+	{
+		f->Update(dt);
 	}
 	MoveToBorders3d();
 	Collision3d();
@@ -308,6 +331,21 @@ void Collision3d()
 			{
 				//printf("zdezenie w odleglosci = %f\n", d);
 			}
+		}
+	}
+	for (Figure3d* figure : Figures)
+	{
+		hib::SolveCollisionTerrain3dvsFigure3d(Terrain, figure->collision_body);
+		figure->position = figure->collision_body->position;
+	}
+	for (Figure3d* f1 : Figures)
+	{
+		for (Figure3d* f2 : Figures)
+		{
+			if(f1->collision_body != f2->collision_body)
+				hib::SolveCollisionFigure3dvsFigure3d(f1->collision_body, f2->collision_body);
+			f1->position = f1->collision_body->position;
+			f2->position = f2->collision_body->position;
 		}
 	}
 }
@@ -426,10 +464,29 @@ int StartSimulation3d()
 	Rays.push_back(new hib::Ray3d(0.0, 5.0, 0.0, 1.0, 0.0, 0.0));
 
 	// Creating Figures
-	Figures.push_back(new hib::PolygonFigure3d("../hitboxes/box.obj", 0.5, 2.0, 0.0, false));
-	Figures.push_back(new hib::PolygonFigure3d("../hitboxes/octahedron.obj", -0.3, 4.0, 0.0, false));
-	Figures.push_back(new hib::PolygonFigure3d("../hitboxes/tetrahendron.obj", -4.0, 3.0, 0.0, false));
-	Figures.push_back(new hib::PolygonFigure3d("../hitboxes/dodecahedron.obj", -4.0, 3.0, 3.0, false));
+	float move = ((int)hib::PolygonFigure3d::COUNT_FIGURES % 30);
+	Figure3d* f;
+	float size = 2.0f;
+	if (hib::PolygonFigure3d::COUNT_FIGURES <= 900)
+	{
+		for (int i = 0; i < 10; i++)
+		{
+			for (int j = 0; j < 6; j++)
+			{
+				f = new Figure3d("../hitboxes/box.obj", -10.0f + (j * size * 2.f) + 0.5f * move, 8.f, -10.0f + 1.f + size * i * 1.2f, false);
+				f->collision_body->CreateDrawableModel();
+				Figures.push_back(f);
+			}
+		}
+	}
+	//Figures.push_back(new Figure3d("../hitboxes/box.obj", 1.5, 8.0, 0.0, false));
+	// 
+	//Figures.push_back(new hib::PolygonFigure3d("../hitboxes/box.obj", 1.5, 8.0, 0.0, false));
+	//Figures.push_back(new hib::PolygonFigure3d("../hitboxes/octahedron.obj", -0.3, 4.0, 0.0, false));
+	//Figures.push_back(new hib::PolygonFigure3d("../hitboxes/wall.obj", -1.5, 4.0, -1.0, true));
+	//Figures.push_back(new hib::PolygonFigure3d("../hitboxes/tetrahendron.obj", -4.0, 3.0, 0.0, false));
+	//Figures.push_back(new hib::PolygonFigure3d("../hitboxes/dodecahedron.obj", -4.0, 3.0, 3.0, false));
+	Terrain = new hib::PolygonFigure3d("../hitboxes/terrain.obj", 0.0, 0.0, 0.0, true);
 
 	//float dis;
 	//glm::vec3 solv;
@@ -437,7 +494,9 @@ int StartSimulation3d()
 	//if(coll) printf("PRAWDA: dis = %f, solv {%f, %f, %f}", dis , solv.x, solv.y, solv.z);
 	//else printf("FALSZ: dis = %f, solv {%f, %f, %f}", dis , solv.x, solv.y, solv.z);
 
-	SolveCollisionFigure3dvsFigure3d(Figures[0], Figures[1], false);
+	//SolveCollisionFigure3dvsFigure3d(Figures[0], Figures[1]);
+	//printf("drugi\n");
+	//SolveCollisionFigure3dvsFigure3d(Figures[0], Figures[1]);
 
 	// Creating model for balls
 	for (Ball* ball : balls)
@@ -458,10 +517,12 @@ int StartSimulation3d()
 	}
 
 	// Creating model for Figures
-	for (hib::PolygonFigure3d* figure : Figures)
+	for (Figure3d* figure : Figures)
 	{
-		figure->CreateDrawableModel();
+		figure->collision_body->CreateDrawableModel();
 	}
+	// Creating model for Terrain
+	Terrain->CreateDrawableModel();
 
 	// Setup Camera and perspective
 	Camera* camera = new Camera(glm::vec3(0.0, 3.0, 15.0));
@@ -537,7 +598,7 @@ int StartSimulation3d()
 		
 			Ball* b;
 			float radius = 0.2f;
-			if(hib::Ball::COUNT_BALLS <= 900)
+			if(hib::Ball::COUNT_BALLS <= -1)
 			{
 				for (int i = 0; i < 10; i++)
 				{
